@@ -8,5 +8,5 @@ python3 setup.py install
 Dependencies will be installed and `codeargos` will be added to your path.
 ## Usage
 ```bash 
-python3 codeargos.py -u target.com 
+python3 -m codeargos -u target.com 
 ```
