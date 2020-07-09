@@ -54,4 +54,6 @@ class CodeArgos:
 
         scan_end = datetime.now(timezone.utc)
         elapsed_time = scan_end - scan_start
-        print( "Scan complete: found {0} code file/blocks in {1}".format( code_blocks, elapsed_time ) )
+        page_cnt = crawler.total_pages()
+
+        print( "Scan complete: found {0} code file/blocks on {1} pages in {2}".format( code_blocks, page_cnt, elapsed_time ) )
