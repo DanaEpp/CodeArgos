@@ -3,6 +3,8 @@ import requests
 import re
 from urllib.parse import urlparse
 from tld import get_tld
+from bs4 import BeautifulSoup
+from pprint import pprint
 
 class WebCrawler(object):
     def __init__(self, starting_url):
@@ -12,49 +14,46 @@ class WebCrawler(object):
 
     def extract_root_domain(self, url):
         res = get_tld(url, as_object=True) 
-        return "//" + res.fld
+        return res.fld
 
     def get_page(self, url):
+
+        headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Max-Age': '3600',
+            'User-Agent': 'Mozilla/5.0 (CodeArgos)'
+        }
+
         try:
-            page = requests.get(url, headers={"User-Agent":"Mozilla/5.0 (CodeArgos)"}, timeout=5)                                
+            page = requests.get(url, headers, timeout=5)
+            parsed_html = BeautifulSoup(page.content, features='html.parser')
         except Exception as ex:
             print(ex)
             return ""
-        return page.content.decode('latin-1')
+        return parsed_html
 
-    def get_links(self, url):    
-        page = self.get_page(url)    
-        parsed = urlparse(url)    
-        base = f"{parsed.scheme}://{parsed.netloc}"    
-        links = re.findall('''<a\s+(?:[^>]*?\s+)?href="([^"]*)"''', page)
+    def get_links(self, parsed_html):
 
-        # Remove any links that are NOT part of the root domain we are crawling (keep it on target)
-        links = [url for url in links if url.startswith(self.starting_url)]
-        
-        for i, link in enumerate(links):    
-            if not urlparse(link).netloc:    
-                link_with_base = base + link    
-                links[i] = link_with_base       
+        anchor_tags = parsed_html.find_all("a", href=True)
 
-        return set(filter(lambda x: 'mailto' not in x, links))    
+        links = []
+        for i, tag in enumerate(anchor_tags):
+            link = tag['href']
+            if link.startswith(self.starting_url) and not link in links:
+                links.append( link )
 
-    def extract_info(self, url):                                
-        page = self.get_page(url)
-        meta = re.findall("<meta .*?name=[\"'](.*?)['\"].*?content=[\"'](.*?)['\"].*?>", page)    
-        return dict(meta)                                   
+        return links    
 
-    def crawl(self, url):                   
-        for link in self.get_links(url):    
+    def crawl(self, url):
+        parsed_html = self.get_page(url)
+
+        for link in self.get_links(parsed_html):    
             if link in self.visited:        
                 continue                    
             self.visited.add(link)
-
-            try:            
-                info = self.extract_info(link)
-                print(link)    
-            except Exception as e:
-                print( "Err on {0}: {1}".format(link, e) )
-            
+            print(url)
             self.crawl(link)    
 
     def start(self):
