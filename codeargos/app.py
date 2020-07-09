@@ -5,11 +5,16 @@ import getopt
 import re
 from codeargos.__version__ import __version__
 import codeargos.Constants as Constants
+from codeargos.webcrawler import WebCrawler
 from datetime import tzinfo, timedelta, datetime, timezone
 
 class CodeArgos:
 
     target_host=''
+
+    def __init__(self, starting_url):
+        self.target_host = starting_url
+        self.visited = set()
 
     @classmethod
     def print_banner(cls):
@@ -38,13 +43,14 @@ class CodeArgos:
                 sys.exit()
             elif opt in ( "-u", "--url"):
                 CodeArgos.target_host = arg
-                if( CodeArgos.target_host.startswith('http')):
-                    CodeArgos.target_host = re.sub( r'https?://', '', CodeArgos.target_host, 1 )
         
         code_blocks = 0
         scan_start = datetime.now(timezone.utc)
         print( "Attempting to scan {0}".format(CodeArgos.target_host))
         print( "Starting scan at {0} UTC".format(scan_start.strftime("%Y-%m-%d %H:%M")) )
+
+        crawler = WebCrawler(CodeArgos.target_host)
+        crawler.start()
 
         scan_end = datetime.now(timezone.utc)
         elapsed_time = scan_end - scan_start
