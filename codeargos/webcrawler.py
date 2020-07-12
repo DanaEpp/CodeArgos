@@ -32,22 +32,15 @@ class WebCrawler(object):
                 f2.write("%s\n" % item)
         sys.exit()
 
-    def get_page(self, url):
-        headers = {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET',
-            'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Max-Age': '3600',
-            'User-Agent': 'Mozilla/5.0 (CodeArgos)'
-        }
+    def get_page(self, session, url):
 
         try:
-            head = requests.head(url)
-            if head.ok:
+            head = session.head(url)
+            if head.status_code == 200:
                 content_type = head.headers.get('Content-Type')
 
                 if content_type.startswith(self.allowed_content):
-                    page = requests.get(url, headers, timeout=5)
+                    page = session.get(url)
                     parsed_html = BeautifulSoup(page.content, features='html.parser')
                 else:
                     return ""
@@ -89,6 +82,8 @@ class WebCrawler(object):
         LOG_EVERY_N = 500
         i = 0
 
+        session = requests.session()
+
         while self.crawl_list:
             url_to_crawl = self.crawl_list.pop()
             if url_to_crawl in self.visited:
@@ -99,7 +94,7 @@ class WebCrawler(object):
                 print("Pages: {0}. Que: {1}".format(self.total_pages(), len(self.crawl_list)))
             i=i+1
 
-            parsed_html = self.get_page(url_to_crawl)
+            parsed_html = self.get_page(session, url_to_crawl)
             if len(parsed_html) > 0:
                 new_links = self.get_links(url_to_crawl, parsed_html)
                 self.crawl_list += new_links
