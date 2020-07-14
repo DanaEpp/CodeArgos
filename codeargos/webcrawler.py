@@ -84,13 +84,14 @@ class Scraper:
         return self.internal_urls, self.url, self.content
 
 class WebCrawler:
-    def __init__(self, seed_url, threads):
+    def __init__(self, seed_url, threads, stats):
         self.seed_url = seed_url
         self.pool = ThreadPoolExecutor(max_workers=threads)
         self.processed_urls = set([])
         self.queued_urls = Queue()
         self.queued_urls.put(self.seed_url)
         self.data = {}
+        self.show_stats = stats
         signal.signal(signal.SIGINT, self.dump_data)
 
     def dump_data(self, signal, frame):
@@ -135,12 +136,12 @@ class WebCrawler:
                     job = self.pool.submit(Scraper(target_url).scrape)
                     job.add_done_callback(self.process_scraper_results)
 
-                # TODO: Put this behind a -s|--stats arg
-                if i % LOG_EVERY_N == 0:
-                    print("Processed: {0:<8} | Queues: {1:<8} | Jobs: {2:<8}".format(
-                        len(self.processed_urls), 
-                        self.queued_urls.qsize(),
-                        self.pool._work_queue.qsize()))                    
+                if self.show_stats:
+                    if i % LOG_EVERY_N == 0:
+                        print("Processed: {0:<8} | Queues: {1:<8} | Jobs: {2:<8}".format(
+                            len(self.processed_urls), 
+                            self.queued_urls.qsize(),
+                            self.pool._work_queue.qsize()))                    
                 i=i+1
             except Empty:
                 print("All done.")

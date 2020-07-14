@@ -34,13 +34,14 @@ class CodeArgos:
         CodeArgos.print_banner()
 
         try:
-            opts, args = getopt.getopt(argv, "hu:t:d", ["help", "url=", "threads=", "debug"])
+            opts, args = getopt.getopt(argv, "hu:t:ds", ["help", "url=", "threads=", "debug", "stats"])
         except getopt.GetoptError:
             CodeArgos.display_usage()
             sys.exit(2)
 
         threads = os.cpu_count() * 5
         log_level = logging.FATAL
+        show_stats = False
 
         for opt, arg in opts:
             if opt in ( "-h", "--help"):
@@ -56,6 +57,8 @@ class CodeArgos:
                     threads = os.cpu_count() * 5
             elif opt in ( "-d", "--debug" ):
                 log_level = logging.DEBUG
+            elif opt in ( "-s", "--stats" ):
+                show_stats = True
 
         logging.basicConfig( filename="codeargos.log", level=log_level )
 
@@ -64,7 +67,7 @@ class CodeArgos:
         print( "Attempting to scan {0} across {1} threads...".format(CodeArgos.target_host, threads))
         print( "Starting scan at {0} UTC".format(scan_start.strftime("%Y-%m-%d %H:%M")) )
 
-        crawler = WebCrawler(CodeArgos.target_host, threads)
+        crawler = WebCrawler(CodeArgos.target_host, threads, show_stats)
         crawler.start()
 
         scan_end = datetime.now(timezone.utc)

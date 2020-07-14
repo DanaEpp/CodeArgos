@@ -12,8 +12,9 @@ python3 setup.py install
 Dependencies will be installed and `codeargos` will be added to your path.
 ## Usage
 ```bash 
-python3 -m codeargos -u target.com [-t thread_cnt] [-d]
+python3 -m codeargos -u target.com [-t thread_cnt] [-d] [-s]
 ```
 * `-u`, `--url` : The target base URL (with crawl anything it finds underneith it)
 * `-t`, `--threads` [optional] : The number of threads to run. By default it is calculated at 5 times your total CPU count
 * `-d`, `--debug` [optional] : Write out debug information to local log file (codeargos.log)
+* `-s`, `--stats` [optional] : Dump stats to stdout to show progress of crawl 
