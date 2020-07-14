@@ -8,6 +8,7 @@ from pprint import pprint
 import signal
 from queue import Queue, Empty
 from concurrent.futures import ThreadPoolExecutor
+import logging
 
 class Scraper:
 
@@ -39,7 +40,7 @@ class Scraper:
             else:
                 return ""
         except Exception as ex:
-            print(ex)
+            logging.exception(ex)
             return ""
         return parsed_html
 
@@ -68,13 +69,15 @@ class Scraper:
 
     def scrape(self):
         session = requests.session()
-        parsed_html = self.get_page(session, self.url)
+        parsed_html = self.get_page(session, self.url)        
         if len(parsed_html) > 0:
             scraped_urls = self.get_links(self.url, parsed_html)
         else:
             scraped_urls = []
-    
+            
         # TODO: Add script block parser and dump results into self.content
+
+        session.close()
 
         self.internal_urls = set(scraped_urls)
 
@@ -127,7 +130,7 @@ class WebCrawler:
                     # add url to the processed list
                     self.processed_urls.add(target_url)
 
-                    # print(f'Processing url {target_url}')
+                    logging.info(f'[URL] {target_url}')
 
                     job = self.pool.submit(Scraper(target_url).scrape)
                     job.add_done_callback(self.process_scraper_results)

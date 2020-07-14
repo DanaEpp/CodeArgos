@@ -8,6 +8,7 @@ from codeargos.__version__ import __version__
 import codeargos.Constants as Constants
 from codeargos.webcrawler import WebCrawler
 from datetime import tzinfo, timedelta, datetime, timezone
+import logging
 
 class CodeArgos:
 
@@ -33,12 +34,13 @@ class CodeArgos:
         CodeArgos.print_banner()
 
         try:
-            opts, args = getopt.getopt(argv, "hu:t:", ["help", "url=", "threads="])
+            opts, args = getopt.getopt(argv, "hu:t:d", ["help", "url=", "threads=", "debug"])
         except getopt.GetoptError:
             CodeArgos.display_usage()
             sys.exit(2)
 
         threads = os.cpu_count() * 5
+        log_level = logging.FATAL
 
         for opt, arg in opts:
             if opt in ( "-h", "--help"):
@@ -52,6 +54,10 @@ class CodeArgos:
                 except:
                     print( "Invalid thread count. Using defaults")
                     threads = os.cpu_count() * 5
+            elif opt in ( "-d", "--debug" ):
+                log_level = logging.DEBUG
+
+        logging.basicConfig( filename="codeargos.log", level=log_level )
 
         code_blocks = 0
         scan_start = datetime.now(timezone.utc)
