@@ -40,7 +40,7 @@ class CodeArgos:
             sys.exit(2)
 
         threads = os.cpu_count() * 5
-        log_level = logging.FATAL
+        log_level = None
         show_stats = False
 
         for opt, arg in opts:
@@ -60,7 +60,18 @@ class CodeArgos:
             elif opt in ( "-s", "--stats" ):
                 show_stats = True
 
-        logging.basicConfig( filename="codeargos.log", level=log_level )
+        if log_level is None:
+            logging.basicConfig( 
+                stream=sys.stdout, 
+                level=log_level,
+                format='%(asctime)s [%(levelname)s] %(message)s',
+                datefmt='%m/%d/%Y %I:%M:%S %p' )
+        else:
+            logging.basicConfig( 
+                filename="codeargos.log", 
+                level=log_level,
+                format='%(asctime)s [%(levelname)s] %(message)s',
+                datefmt='%m/%d/%Y %I:%M:%S %p' )
 
         code_blocks = 0
         scan_start = datetime.now(timezone.utc)
