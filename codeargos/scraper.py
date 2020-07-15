@@ -4,6 +4,7 @@ from urllib3.util.retry import Retry
 from urllib.parse import urlparse,urljoin
 from bs4 import BeautifulSoup
 from pprint import pprint
+import logging
 
 class Scraper:
 
