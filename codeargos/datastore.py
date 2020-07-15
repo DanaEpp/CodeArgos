@@ -1,26 +1,69 @@
 import sqlite3
 from codeargos.scrapedpage import ScrapedPage
+import threading
 
 class DataStore:
     def __init__(self, db_name):
         self.db_name = db_name
-        self.conn = sqlite3.connect(':memory:') 
+        
+        # To handle the fact python doesn't like recursive cursors
+        # for sqlite, we have to use thread locking to prevent mangling
+        self.lock = threading.Lock()
+
+        # sqlite3 does not like multithreading in python. 
+        # We have to remove the thread id check.
+        self.conn = sqlite3.connect(':memory:', check_same_thread=False) 
         # self.conn = sqlite3.connect( db_name + '.db')
+
         self.db = self.conn.cursor()
         self.create_datastore()
 
     def close(self):
+        self.db.close()
         self.conn.close()
     
     def create_datastore(self):
-        with self.conn:
-            self.db.execute( "CREATE TABLE pages (url TEXT, sig TXT)" )
+        try:
+            self.lock.acquire(True)
+            self.db.execute( 
+                """CREATE TABLE IF NOT EXISTS 
+                    pages (url TEXT NOT NULL PRIMARY KEY, sig TXT NOT NULL)
+                """ )
+            self.conn.commit()
+        finally:
+            self.lock.release()                
 
-    def insert_page(self, page):
-        with self.conn:
-            self.db.execute("INSERT INTO pages VALUE( :url, :sig )", {'url': page.url, 'sig': page.signature} )
-
+    def add_page(self, page):
+        # As sqlite doesn't have UPSERT, this will do the trick
+        try:
+            self.lock.acquire(True)
+            self.db.execute(
+                """INSERT INTO pages VALUES( :url, :sig )
+                    ON CONFLICT(url) 
+                        DO UPDATE SET sig=:sig
+                """, 
+                {'url': page.url, 'sig': page.signature} )
+            self.conn.commit()
+        finally:
+            self.lock.release()
+            
     def get_page(self, url):
-        with self.conn:
+        page = None
+        try:
+            self.lock.acquire(True)
             self.db.execute("SELECT * FROM pages WHERE url=:u", {'u': url})
-            return self.db.fetchone()
+            page = self.db.fetchone()
+        finally:
+            self.lock.release()
+        return page
+
+    def dump_pages(self):
+        try:
+            self.lock.acquire(True)
+            self.db.execute( "SELECT * FROM pages")
+            pages = self.db.fetchall()
+        finally:
+            self.lock.release()
+
+        for page in pages:
+            print(page)

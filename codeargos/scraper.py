@@ -5,6 +5,7 @@ from urllib.parse import urlparse,urljoin
 from bs4 import BeautifulSoup
 from pprint import pprint
 import logging
+import hashlib
 
 class Scraper:
 
@@ -22,24 +23,23 @@ class Scraper:
         self.content = None
 
     def get_page(self, session, url):
-
+        parsed_html = ""
+        page_sig = None
+        
         try:
             head = session.head(url)
             if head.status_code == 200:
                 content_type = head.headers.get('Content-Type')
-
                 if content_type.startswith(self.allowed_content):
-                    page = session.get(url)
-                    parsed_html = BeautifulSoup(page.content, features='html.parser')
-                else:
-                    return ""
-            else:
-                return ""
-        except Exception as ex:
+                    response = session.get(url)
+                    if response.ok: 
+                        parsed_html = BeautifulSoup(response.content, features='html.parser')
+                        page_sig = hashlib.sha256(response.text.encode('utf-8')).hexdigest()
 
+        except Exception as ex:
             logging.exception(ex)
-            return ""
-        return parsed_html
+        
+        return parsed_html, page_sig
 
     def get_links(self, url, parsed_html):
 
@@ -65,6 +65,8 @@ class Scraper:
         return links    
 
     def scrape(self):
+        parsed_html = ""
+        new_page_sig = ""
         session = requests.session()
 
         # Add incrimental backoff retry logic some we aren't slamming servers
@@ -79,13 +81,20 @@ class Scraper:
         session.mount('http://', adapter)
         session.mount('https://', adapter)
 
-        parsed_html = self.get_page(session, self.url)        
+        try:
+            parsed_html, new_page_sig = self.get_page(session, self.url)
+        except Exception as e:
+            logging.exception(e)
+
+        # TODO check signature to see if the page has changed and we even have to process the content 
+
         if len(parsed_html) > 0:
             scraped_urls = self.get_links(self.url, parsed_html)
         else:
             scraped_urls = []
             
         # TODO: Add script block parser and dump results into self.content
+        self.content = new_page_sig
 
         session.close()
 
