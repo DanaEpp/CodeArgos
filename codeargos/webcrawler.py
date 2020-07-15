@@ -12,6 +12,8 @@ from queue import Queue, Empty
 from concurrent.futures import ThreadPoolExecutor
 import logging
 import time
+from codeargos.datastore import DataStore
+from codeargos.scrapedpage import ScrapedPage
 
 class Scraper:
 
@@ -109,6 +111,7 @@ class WebCrawler:
         self.queued_urls.put(self.seed_url)
         self.data = {}
         self.show_stats = stats
+        self.data_store = DataStore("codeargos")
         signal.signal(signal.SIGINT, self.dump_data)
 
     def dump_data(self, signal, frame):
