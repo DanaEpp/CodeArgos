@@ -23,5 +23,7 @@ python3 -m codeargos -u target.com [-t thread_cnt] [-d] [-s] [-f /path/to/your/f
 ## Tips
 If you are having any difficulties in crawling your target web app, consider dialing back the threads used. By default it will select five times the number of CPUs you have. I've found the most success with `-t 10` on targets behind difficult WAFs. While there is an incrimental backoff retry pattern in the tool, the reality is CodeArgos can be agressive on its initial scan as it populates it's database. 
 
-If you aren't sure whats going on, use the `-d` argument and look through the `codeargos.log` file to see what is going on. If you find the tool is tripping up on a target, please open an [issue](https://github.com/DanaEpp/CodeArgos/issues) and include your target URL and any log data you are comfortable in sharing. I'll try to take a look at is ASAP.
+If you aren't sure whats going on, use the `-d` argument and look through the `codeargos.log` file to see what is going on. ie: `tail -f codeargos.log` 
+
+If you find the tool is tripping up on a target, please open an [issue](https://github.com/DanaEpp/CodeArgos/issues) and include your target URL and any log data you are comfortable in sharing. I'll try to take a look at it ASAP.
 
