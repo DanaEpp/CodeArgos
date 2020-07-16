@@ -27,7 +27,7 @@ class CodeArgos:
 
     @classmethod
     def display_usage(cls):
-        print( 'codeargos.py -u example.com' )       
+        print( 'codeargos.py -u example.com [-t thread_cnt] [-d] [-s]' )       
 
     @staticmethod
     def run(argv):
@@ -35,7 +35,9 @@ class CodeArgos:
 
         try:
             opts, args = getopt.getopt(argv, "hu:t:ds", ["help", "url=", "threads=", "debug", "stats"])
-        except getopt.GetoptError:
+        except getopt.GetoptError as err:
+            logging.exception(err)
+            logging.debug("opts: {0} | args: {1}".format(opts, args))
             CodeArgos.display_usage()
             sys.exit(2)
 
