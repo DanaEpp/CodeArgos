@@ -12,14 +12,20 @@ from codeargos.scrapedpage import ScrapedPage
 from urllib.parse import urlparse
 
 class WebCrawler:
-    def __init__(self, seed_url, threads, stats):
+    def __init__(self, seed_url, threads, stats, db_file_path):
         self.seed_url = seed_url
         self.pool = ThreadPoolExecutor(max_workers=threads)
         self.processed_urls = set([])
         self.queued_urls = Queue()
         self.queued_urls.put(self.seed_url)
         self.show_stats = stats
-        self.data_store = DataStore(self.get_target_domain(seed_url))
+
+        db_name = "unknown.db"
+        if db_file_path is None:
+            db_name = self.gen_db_name(seed_url)
+        else:
+            db_name = db_file_path
+        self.data_store = DataStore(db_name)
         signal.signal(signal.SIGINT, self.dump_data)
 
     def __del__(self):       
@@ -29,16 +35,16 @@ class WebCrawler:
             except Exception as e:
                 logging.exception(e)
 
-    def get_target_domain(self, url):
-        target_domain = "unknown"
+    def gen_db_name(self, url):
+        target = "unknown"
         try:
             parsed_url = urlparse(url) 
             if parsed_url.netloc:
-                target_domain = parsed_url.hostname
+                target = parsed_url.hostname
         except Exception as e:
             logging.exception(e)
 
-        return target_domain
+        return target + ".db" 
 
     def dump_data(self, signal, frame):
         choice = input( "\nEarly abort detected. Dump data already collected? (to processed.txt): [y/N] ")

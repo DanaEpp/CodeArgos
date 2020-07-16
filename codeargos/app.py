@@ -27,14 +27,14 @@ class CodeArgos:
 
     @classmethod
     def display_usage(cls):
-        print( 'codeargos.py -u example.com [-t thread_cnt] [-d] [-s]' )       
+        print( 'codeargos.py -u example.com [-t thread_cnt] [-d] [-s] [-f /path/to/your.db]' )       
 
     @staticmethod
     def run(argv):
         CodeArgos.print_banner()
 
         try:
-            opts, args = getopt.getopt(argv, "hu:t:ds", ["help", "url=", "threads=", "debug", "stats"])
+            opts, args = getopt.getopt(argv, "hu:t:dsf:", ["help", "url=", "threads=", "debug", "stats", "f"])
         except getopt.GetoptError as err:
             logging.exception(err)
             logging.debug("opts: {0} | args: {1}".format(opts, args))
@@ -44,6 +44,7 @@ class CodeArgos:
         threads = os.cpu_count() * 5
         log_level = None
         show_stats = False
+        db_file_path = None
 
         for opt, arg in opts:
             if opt in ( "-h", "--help"):
@@ -61,6 +62,8 @@ class CodeArgos:
                 log_level = logging.DEBUG
             elif opt in ( "-s", "--stats" ):
                 show_stats = True
+            elif opt in ( "-f", "--file" ):
+                db_file_path = arg
 
         if log_level is None:
             logging.basicConfig( 
@@ -80,7 +83,7 @@ class CodeArgos:
         print( "Attempting to scan {0} across {1} threads...".format(CodeArgos.target_host, threads))
         print( "Starting scan at {0} UTC".format(scan_start.strftime("%Y-%m-%d %H:%M")) )
 
-        crawler = WebCrawler(CodeArgos.target_host, threads, show_stats)
+        crawler = WebCrawler(CodeArgos.target_host, threads, show_stats, db_file_path)
         crawler.start()
 
         scan_end = datetime.now(timezone.utc)

@@ -1,19 +1,20 @@
+import sys
 import sqlite3
 from codeargos.scrapedpage import ScrapedPage
 import threading
+from os.path import isfile, getsize
+import logging
 
 class DataStore:
-    def __init__(self, db_name):
-        self.db_name = db_name
-        
+    def __init__(self, db_file_name):
         # To handle the fact python doesn't like recursive cursors
         # for sqlite, we have to use thread locking to prevent mangling
         self.lock = threading.Lock()
 
         # sqlite3 does not like multithreading in python. 
         # We have to remove the thread id check.
-        self.conn = sqlite3.connect(':memory:', check_same_thread=False) 
-        # self.conn = sqlite3.connect( db_name + '.db')
+        # self.conn = sqlite3.connect(':memory:', check_same_thread=False) 
+        self.conn = sqlite3.connect( db_file_name, check_same_thread=False )
 
         self.db = self.conn.cursor()
         self.create_datastore()

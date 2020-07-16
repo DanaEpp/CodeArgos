@@ -9,6 +9,9 @@ __pycache__/
 # VS code
 .vscode
 
+# Ignore test databases
+*.db
+
 # Distribution / packaging
 .Python
 build/
