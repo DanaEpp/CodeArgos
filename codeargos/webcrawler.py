@@ -9,6 +9,7 @@ import time
 from codeargos.scraper import Scraper
 from codeargos.datastore import DataStore
 from codeargos.scrapedpage import ScrapedPage
+from urllib.parse import urlparse
 
 class WebCrawler:
     def __init__(self, seed_url, threads, stats):
@@ -18,7 +19,7 @@ class WebCrawler:
         self.queued_urls = Queue()
         self.queued_urls.put(self.seed_url)
         self.show_stats = stats
-        self.data_store = DataStore("codeargos")
+        self.data_store = DataStore(self.get_target_domain(seed_url))
         signal.signal(signal.SIGINT, self.dump_data)
 
     def __del__(self):       
@@ -27,6 +28,17 @@ class WebCrawler:
                 self.data_store.close()
             except Exception as e:
                 logging.exception(e)
+
+    def get_target_domain(self, url):
+        target_domain = "unknown"
+        try:
+            parsed_url = urlparse(url) 
+            if parsed_url.netloc:
+                target_domain = parsed_url.hostname
+        except Exception as e:
+            logging.exception(e)
+
+        return target_domain
 
     def dump_data(self, signal, frame):
         choice = input( "\nEarly abort detected. Dump data already collected? (to processed.txt): [y/N] ")
