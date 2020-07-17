@@ -58,7 +58,8 @@ class DataStore:
             self.lock.acquire(True)
             self.db.execute("SELECT * FROM pages WHERE url=:u", {'u': url})
             data = self.db.fetchone()
-            page = ScrapedPage( data['url'], data['sig'])
+            if data:
+                page = ScrapedPage( data['url'], data['sig'])
         finally:
             self.lock.release()
         return page
