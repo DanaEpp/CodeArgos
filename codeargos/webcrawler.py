@@ -19,6 +19,7 @@ class WebCrawler:
         self.queued_urls = Queue()
         self.queued_urls.put(self.seed_url)
         self.show_stats = stats
+        self.script_blocks = []
 
         db_name = "unknown.db"
         if db_file_path is None:
@@ -57,13 +58,21 @@ class WebCrawler:
 
     def process_scraper_results(self, future):
         # get the items of interest from the future object
-        internal_urls, url, sig = future._result[0], future._result[1], future._result[2]
+        internal_urls, url, sig, scripts = future._result[0], future._result[1], future._result[2], future._result[3]
 
         # There are occassions when an unknown media type gets through and 
         # can't be properly hashed. Instead of b0rking, let's just let it go
         if sig is not None:
             page = ScrapedPage(url,sig)
             self.data_store.add_page(page)
+
+            # TODO: Add script blocks to database
+            logging.debug( "Found {0} script blocks in {1}".format(len(scripts), url))
+
+            if scripts:
+                for script in scripts:
+                    if script not in self.script_blocks:
+                        self.script_blocks.append(script)
 
         # also add scraped links to queue if they
         # aren't already queued or already processed
@@ -74,6 +83,10 @@ class WebCrawler:
     @property
     def processed(self):
         return len(self.processed_urls)
+
+    @property
+    def script_count(self):
+        return len(self.script_blocks)
 
     def dump_pages(self):
         self.data_store.dump_pages()
@@ -94,7 +107,10 @@ class WebCrawler:
 
                     logging.debug(f'[URL] {target_url}')
 
-                    job = self.pool.submit(Scraper(target_url).scrape)
+                    # Check the datastore to see if we have a sig for this page
+                    scraped_page = self.data_store.get_page(target_url) 
+
+                    job = self.pool.submit(Scraper(target_url, scraped_page).scrape)
                     job.add_done_callback(self.process_scraper_results)
 
                 if self.show_stats:

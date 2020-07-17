@@ -1,7 +1,7 @@
 class ScrapedPage:
     def __init__(self, url, sig):
         self.page_url = url
-        self.page_sig = sig        
+        self.page_sig = sig                
 
     @property
     def url(self):

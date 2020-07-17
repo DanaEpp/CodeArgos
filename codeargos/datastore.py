@@ -15,6 +15,7 @@ class DataStore:
         # We have to remove the thread id check.
         # self.conn = sqlite3.connect(':memory:', check_same_thread=False) 
         self.conn = sqlite3.connect( db_file_name, check_same_thread=False )
+        self.conn.row_factory = sqlite3.Row
 
         self.db = self.conn.cursor()
         self.create_datastore()
@@ -28,7 +29,10 @@ class DataStore:
             self.lock.acquire(True)
             self.db.execute( 
                 """CREATE TABLE IF NOT EXISTS 
-                    pages (url TEXT NOT NULL PRIMARY KEY, sig TXT NOT NULL)
+                    pages (
+                        url TEXT NOT NULL PRIMARY KEY, 
+                        sig TXT NOT NULL, 
+                        last_update DATETIME DEFAULT CURRENT_TIMESTAMP)
                 """ )
             self.conn.commit()
         finally:
@@ -39,9 +43,9 @@ class DataStore:
         try:
             self.lock.acquire(True)
             self.db.execute(
-                """INSERT INTO pages VALUES( :url, :sig )
+                """INSERT INTO pages VALUES( :url, :sig, CURRENT_TIMESTAMP )
                     ON CONFLICT(url) 
-                        DO UPDATE SET sig=:sig
+                        DO UPDATE SET sig=:sig, last_update=CURRENT_TIMESTAMP
                 """, 
                 {'url': page.url, 'sig': page.signature} )
             self.conn.commit()
@@ -53,7 +57,8 @@ class DataStore:
         try:
             self.lock.acquire(True)
             self.db.execute("SELECT * FROM pages WHERE url=:u", {'u': url})
-            page = self.db.fetchone()
+            data = self.db.fetchone()
+            page = ScrapedPage( data['url'], data['sig'])
         finally:
             self.lock.release()
         return page

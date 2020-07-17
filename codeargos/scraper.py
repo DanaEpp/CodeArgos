@@ -6,6 +6,8 @@ from bs4 import BeautifulSoup
 from pprint import pprint
 import logging
 import hashlib
+from codeargos.scriptblock import ScriptBlock
+from codeargos.scrapedpage import ScrapedPage
 
 class Scraper:
 
@@ -17,10 +19,11 @@ class Scraper:
         'application/xhtml+xml'
         )
 
-    def __init__(self, url):
-        self.url = url 
+    def __init__(self, url, scraped_page):
+        self.url = url
+        self.old_scraped_page = scraped_page 
         self.internal_urls = None
-        self.content = None
+        self.script_blocks = None
 
     def get_page(self, session, url):
         parsed_html = ""
@@ -64,9 +67,20 @@ class Scraper:
 
         return links    
 
+    def get_script_blocks(self, parsed_html):
+
+        script_blocks = []
+
+        for code in parsed_html.find_all("script"):
+            codesig = hashlib.sha256(code.text.encode('utf-8')).hexdigest()
+            block = ScriptBlock(self.url, code.text, codesig)            
+            script_blocks.append( block )
+
+        return script_blocks
+
     def scrape(self):
         parsed_html = ""
-        new_page_sig = ""
+        new_page_sig = None
         session = requests.session()
 
         # Add incrimental backoff retry logic some we aren't slamming servers
@@ -86,18 +100,31 @@ class Scraper:
         except Exception as e:
             logging.exception(e)
 
-        # TODO check signature to see if the page has changed and we even have to process the content 
-
+        # Check signature to see if the page has changed 
+        # and if we even have to process the content further
+        new_content = True
+        if self.old_scraped_page is not None: 
+            if self.old_scraped_page.signature == new_page_sig:                
+                new_content = False
+                logging.debug( "No changes detected on {0}".format(self.url))
+        
+        scraped_urls = []    
         if len(parsed_html) > 0:
-            scraped_urls = self.get_links(self.url, parsed_html)
-        else:
-            scraped_urls = []
-            
-        # TODO: Add script block parser and dump results into self.content
-        self.content = new_page_sig
+            try:
+                scraped_urls = self.get_links(self.url, parsed_html)
+            except Exception as e:
+                logging.exception(e)
+
+        # We only need to fetch new script blocks if the page actually changed
+        if new_content:
+            # Grab any script blocks on the page
+            try:
+                self.script_blocks = self.get_script_blocks(parsed_html)
+            except Exception as e:
+                logging.exception(e)
 
         session.close()
 
         self.internal_urls = set(scraped_urls)
-
-        return self.internal_urls, self.url, self.content
+        
+        return self.internal_urls, self.url, new_page_sig, self.script_blocks

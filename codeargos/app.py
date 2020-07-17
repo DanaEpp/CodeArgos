@@ -78,7 +78,6 @@ class CodeArgos:
                 format='%(asctime)s [%(levelname)s] %(message)s',
                 datefmt='%m/%d/%Y %I:%M:%S %p' )
 
-        code_blocks = 0
         scan_start = datetime.now(timezone.utc)
         print( "Attempting to scan {0} across {1} threads...".format(CodeArgos.target_host, threads))
         print( "Starting scan at {0} UTC".format(scan_start.strftime("%Y-%m-%d %H:%M")) )
@@ -92,6 +91,6 @@ class CodeArgos:
         # if log_level is not None:
         #     crawler.dump_pages()
 
-        print( "Scan complete: found {0} code file/blocks on {1} pages in {2}".format( code_blocks, crawler.processed, elapsed_time ) )
+        print( "Scan complete: found {0} code file/blocks on {1} pages in {2}".format( crawler.script_count, crawler.processed, elapsed_time ) )
 
         
