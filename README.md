@@ -27,3 +27,16 @@ If you aren't sure whats going on, use the `-d` argument and look through the `c
 
 If you find the tool is tripping up on a target, please open an [issue](https://github.com/DanaEpp/CodeArgos/issues) and include your target URL and any log data you are comfortable in sharing. I'll try to take a look at it ASAP.
 
+## Dev Tips
+You can evaluate the scanner and parser by jumping into the test_site dir and running the launcher. It will load a test web server on port 9000 for you.
+
+```
+cd test_site
+./launch_test_site.sh
+```
+In another shell window execute:
+```
+python3 -m codeargos -u http://localhost:9000 -d -t 10 -f test.db
+```
+The test site will continue to be expanded on as we find in-field issues with the parsing and data management. If you wish to contribute, here would be a great place to add complex and weird script blocks that we can evaluate and make sure get parsed correctly.
+
