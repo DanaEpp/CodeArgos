@@ -1,12 +1,12 @@
+import logging
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from urllib.parse import urlparse,urljoin
 from bs4 import BeautifulSoup
 from pprint import pprint
-import logging
 import hashlib
-from codeargos.scriptblock import ScriptBlock
+from codeargos.scriptblock import ScriptBlock, ScriptBlockType
 from codeargos.scrapedpage import ScrapedPage
 
 class Scraper:
@@ -72,21 +72,61 @@ class Scraper:
         script_blocks = []
 
         for code in parsed_html.find_all("script"):
-            codesig = hashlib.sha256(code.text.encode('utf-8')).hexdigest()
-            block = ScriptBlock(self.url, code.text, codesig)            
+            # TODO: Future enhancement - We currently do not extract inline script blocks, 
+            # and we should. ie: onerror=alert(1)
+            block_type = ScriptBlockType.BLOCK
+
+            code_block = ""
+            code_sig = ""
+
+            if 'src' in code.attrs:
+                block_type = ScriptBlockType.EXTERNAL
+                # Since the actual code is external we have to fetch that first 
+                code_src = code['src']
+                parsed_url = urlparse(code_src)
+
+                # In case we have relative path javascript files
+                if not parsed_url.netloc:
+                    code_src = urljoin(self.url, code_src)
+
+                logging.debug( "Fetching external script at {0}".format(code_src))
+
+                try:
+                    response = requests.get(code_src)
+                    if response.status_code == 200:
+                        code_block = response.text
+                except Exception as e:
+                    logging.exception(e)
+                    # If we couldn't fetch the code block we have to consider it dead and move on
+                    continue
+            else:
+                # You would think .text would be the right place for block scripts, but you would be
+                # wrong. Ends up it parks it in .string
+                code_block = code.string
+
+            if code_block:
+                try:
+                    code_sig = hashlib.sha256(code_block.encode('utf-8')).hexdigest()
+                except Exception as e:
+                    logging.exception(e)
+                    # If we blow up on the crypto, we have to consider it a bad signature and should remove it, 
+                    # forcing a change delta check for researcher analysis
+                    continue
+
+            block = ScriptBlock(self.url, code_block, code_sig, block_type)            
             script_blocks.append( block )
 
         return script_blocks
 
     def scrape(self):
         parsed_html = ""
-        new_page_sig = None
+        new_page_sig = ""
         session = requests.session()
 
         # Add incrimental backoff retry logic some we aren't slamming servers
         retry_strategy = Retry(
             total=10,
-            status_forcelist=[104,429,500,502,503,504],
+            status_forcelist=[104, 429, 500, 502, 503, 504],
             method_whitelist=["HEAD", "GET", "OPTIONS"],
             backoff_factor=1
         )
@@ -127,4 +167,4 @@ class Scraper:
 
         self.internal_urls = set(scraped_urls)
         
-        return self.internal_urls, self.url, new_page_sig, self.script_blocks
+        return self.internal_urls, self.url, new_page_sig, self.script_blocks, new_content

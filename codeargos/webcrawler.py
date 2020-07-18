@@ -19,7 +19,7 @@ class WebCrawler:
         self.queued_urls = Queue()
         self.queued_urls.put(self.seed_url)
         self.show_stats = stats
-        self.script_blocks = []
+        self.scripts_found = 0
 
         db_name = "unknown.db"
         if db_file_path is None:
@@ -58,21 +58,21 @@ class WebCrawler:
 
     def process_scraper_results(self, future):
         # get the items of interest from the future object
-        internal_urls, url, sig, scripts = future._result[0], future._result[1], future._result[2], future._result[3]
+        internal_urls, url, sig, scripts, new_content = future._result[0], future._result[1], future._result[2], future._result[3], future._result[4]
 
         # There are occassions when an unknown media type gets through and 
-        # can't be properly hashed. Instead of b0rking, let's just let it go
-        if sig is not None:
-            page = ScrapedPage(url,sig)
+        # can't be properly hashed, which leaves sig empty. Instead of b0rking, 
+        # let's just let it go and move on.
+        if new_content and sig:
+            page = ScrapedPage(url, sig, scripts)
             self.data_store.add_page(page)
 
-            # TODO: Add script blocks to database
-            logging.debug( "Found {0} script blocks in {1}".format(len(scripts), url))
-
+            script_cnt = 0
             if scripts:
-                for script in scripts:
-                    if script not in self.script_blocks:
-                        self.script_blocks.append(script)
+                script_cnt = len(scripts)
+                self.scripts_found += script_cnt
+
+            logging.debug( "Found {0} script blocks in {1}".format(script_cnt, url))
 
         # also add scraped links to queue if they
         # aren't already queued or already processed
@@ -80,13 +80,14 @@ class WebCrawler:
             if link_url.startswith(self.seed_url):
                 if link_url not in self.queued_urls.queue and link_url not in self.processed_urls:
                     self.queued_urls.put(link_url)
+    
     @property
     def processed(self):
         return len(self.processed_urls)
 
     @property
     def script_count(self):
-        return len(self.script_blocks)
+        return self.scripts_found
 
     def dump_pages(self):
         self.data_store.dump_pages()
