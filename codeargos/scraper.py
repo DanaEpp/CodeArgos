@@ -128,7 +128,10 @@ class Scraper:
         if self.old_scraped_page: 
             if self.old_scraped_page.signature == new_page_sig:                
                 new_content = False
-                logging.debug( "No changes detected on {0}".format(self.url))
+            else:
+                msg = "Changes detected on {0}".format(self.url)
+                print(msg)
+                logging.debug(msg)
         
         scraped_urls = []    
         if len(parsed_html) > 0:

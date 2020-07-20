@@ -12,10 +12,28 @@ class CodeDiffer:
         pass
     
     def diff(self, url, original_code, new_code):
+        diff_data = ""
+
         # Prep the two code blocks, after expanding into readable segments
         options = {
-            "keep_function_indentation": 0,
-            "indent_with_tabs": 1
+            "keep_function_indentation": True,
+            "keep_array_indentation": True,
+            "jslint_happy": True
+            # "html": {
+            #     "end_with_newline": True,
+            #     "js": {
+            #         "indent_size": 2
+            #     },
+            #     "css": {
+            #         "indent_size": 2
+            #     }
+            # },
+            # "css": {
+            #     "indent_size": 1
+            # },
+            # "js": {
+            #     "preserve_newlines": True
+            # }
         }
 
         beautiful_old_code = jsbeautifier.beautify(original_code, options).splitlines()
@@ -27,14 +45,16 @@ class CodeDiffer:
                 fromfile="before", tofile="after",
                 lineterm="")
 
-            diff = self.__color_diff(diff)
+            color_diff = self.__color_diff(diff)
             print( "[CHANGED FILE] {0}".format(url))
-            print('\n'.join(diff))
+            print('\n'.join(color_diff))
+            diff_data = '\n'.join(diff)
+            return diff_data
         else:
             # Generate an HTML diff file
             differ = difflib.HtmlDiff()
-            html = differ.make_file( beautiful_old_code, beautiful_new_code )
-            return html
+            diff_data = differ.make_file( beautiful_old_code, beautiful_new_code )
+            return diff_data
         
     def __color_diff(self, diff):
         for line in diff:
@@ -46,3 +66,4 @@ class CodeDiffer:
                 yield Fore.BLUE + line + Fore.RESET
             else:
                 yield line
+
