@@ -1,8 +1,8 @@
 class ScrapedPage:
-    def __init__(self, url, sig, script_blocks):
+    def __init__(self, url, sig, content):
         self.page_url = url
         self.page_sig = sig
-        self.script_blocks = script_blocks                
+        self.page_content = content                
 
     @property
     def url(self):
@@ -13,8 +13,8 @@ class ScrapedPage:
         return self.page_sig
 
     @property
-    def scripts(self):
-        return self.script_blocks
+    def content(self):
+        return self.page_content
 
     def __repr__(self):
         return "{ url:\"{0}\", sig: \"{1}\" }".format(self.page_url, self.page_sig)

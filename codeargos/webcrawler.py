@@ -58,36 +58,27 @@ class WebCrawler:
 
     def process_scraper_results(self, future):
         # get the items of interest from the future object
-        internal_urls, url, sig, scripts, new_content = future._result[0], future._result[1], future._result[2], future._result[3], future._result[4]
-
+        internal_urls, url, sig, new_content, raw_content = future._result[0], future._result[1], future._result[2], future._result[3], future._result[4]
+        
         # There are occassions when an unknown media type gets through and 
         # can't be properly hashed, which leaves sig empty. Instead of b0rking, 
         # let's just let it go and move on.
         if new_content and sig:
-            page = ScrapedPage(url, sig, scripts)
+            page = ScrapedPage(url, sig, raw_content)
             self.data_store.add_page(page)
-
-            script_cnt = 0
-            if scripts:
-                script_cnt = len(scripts)
-                self.scripts_found += script_cnt
-
-            logging.debug( "Found {0} script blocks in {1}".format(script_cnt, url))
 
         # also add scraped links to queue if they
         # aren't already queued or already processed
         for link_url in internal_urls:
-            if link_url.startswith(self.seed_url):
+            # We have to account for not just internal pages, but external scripts foreign to 
+            # the target app. ie: jQuery, Angular etc
+            if link_url.startswith(self.seed_url) or link_url.lower().endswith(".js"):
                 if link_url not in self.queued_urls.queue and link_url not in self.processed_urls:
                     self.queued_urls.put(link_url)
     
     @property
     def processed(self):
         return len(self.processed_urls)
-
-    @property
-    def script_count(self):
-        return self.scripts_found
 
     def dump_pages(self):
         self.data_store.dump_pages()

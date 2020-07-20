@@ -6,7 +6,6 @@ from urllib.parse import urlparse,urljoin
 from bs4 import BeautifulSoup
 from pprint import pprint
 import hashlib
-from codeargos.scriptblock import ScriptBlock, ScriptBlockType
 from codeargos.scrapedpage import ScrapedPage
 
 class Scraper:
@@ -14,40 +13,53 @@ class Scraper:
     allowed_content = (
         'text/plain', 
         'text/html', 
-        'text/javascript', 
         'application/x-httpd-php',
-        'application/xhtml+xml'
+        'application/xhtml+xml',
+        'application/javascript',
+        'application/ecmascript',
+        'application/x-ecmascript',
+        'application/x-javascript',
+        'text/javascript',
+        'text/ecmascript',
+        'text/javascript1.0',
+        'text/javascript1.1',
+        'text/javascript1.2',
+        'text/javascript1.3',
+        'text/javascript1.4',
+        'text/javascript1.5',
+        'text/jscript',
+        'text/livescript',
+        'text/x-ecmascript',
+        'text/x-javascript'
         )
 
     def __init__(self, url, scraped_page):
         self.url = url
         self.old_scraped_page = scraped_page 
         self.internal_urls = None
-        self.script_blocks = None
 
     def get_page(self, session, url):
-        parsed_html = ""
-        page_sig = None
+        response = None
         
         try:
+            # This is fetching twice, but the first lets us determine if its a 
+            # filetype we can actually process or not, which saves overall on 
+            # bandwidth for files and images we just don't care about
             head = session.head(url)
             if head.status_code == 200:
                 content_type = head.headers.get('Content-Type')
                 if content_type.startswith(self.allowed_content):
                     response = session.get(url)
-                    if response.ok: 
-                        parsed_html = BeautifulSoup(response.content, features='html.parser')
-                        page_sig = hashlib.sha256(response.text.encode('utf-8')).hexdigest()
-
         except Exception as ex:
             logging.exception(ex)
         
-        return parsed_html, page_sig
+        return response
 
     def get_links(self, url, parsed_html):
 
         links = []
 
+        # Get links to other pages within the app
         for link in parsed_html.find_all("a", href=True):
             link_url = link.get('href').strip()
             if link_url is None:
@@ -65,60 +77,23 @@ class Scraper:
 
             links.append( full_url )
 
-        return links    
+        # Get links to javascript files used by the app
+        for script in parsed_html.find_all("script"):
 
-    def get_script_blocks(self, parsed_html):
-
-        script_blocks = []
-
-        for code in parsed_html.find_all("script"):
-            # TODO: Future enhancement - We currently do not extract inline script blocks, 
-            # and we should. ie: onerror=alert(1)
-            block_type = ScriptBlockType.BLOCK
-
-            code_block = ""
-            code_sig = ""
-
-            if 'src' in code.attrs:
-                block_type = ScriptBlockType.EXTERNAL
-                # Since the actual code is external we have to fetch that first 
-                code_src = code['src']
-                parsed_url = urlparse(code_src)
+            if 'src' in script.attrs:
+                script_url = script['src']
+                parsed_url = urlparse(script_url)
 
                 # In case we have relative path javascript files
                 if not parsed_url.netloc:
-                    code_src = urljoin(self.url, code_src)
+                    script_url = urljoin(self.url, script_url)
+                
+                links.append( script_url )
 
-                logging.debug( "Fetching external script at {0}".format(code_src))
-
-                try:
-                    response = requests.get(code_src)
-                    if response.status_code == 200:
-                        code_block = response.text
-                except Exception as e:
-                    logging.exception(e)
-                    # If we couldn't fetch the code block we have to consider it dead and move on
-                    continue
-            else:
-                # You would think .text would be the right place for block scripts, but you would be
-                # wrong. Ends up it parks it in .string
-                code_block = code.string
-
-            if code_block:
-                try:
-                    code_sig = hashlib.sha256(code_block.encode('utf-8')).hexdigest()
-                except Exception as e:
-                    logging.exception(e)
-                    # If we blow up on the crypto, we have to consider it a bad signature and should remove it, 
-                    # forcing a change delta check for researcher analysis
-                    continue
-
-            block = ScriptBlock(self.url, code_block, code_sig, block_type)            
-            script_blocks.append( block )
-
-        return script_blocks
+        return links    
 
     def scrape(self):
+        raw_content = "" 
         parsed_html = ""
         new_page_sig = ""
         session = requests.session()
@@ -136,14 +111,21 @@ class Scraper:
         session.mount('https://', adapter)
 
         try:
-            parsed_html, new_page_sig = self.get_page(session, self.url)
+            response = self.get_page(session, self.url)
+            if response and response.ok: 
+                raw_content = response.text
+                parsed_html = BeautifulSoup(response.content, features='html.parser')
+                new_page_sig = hashlib.sha256(response.text.encode('utf-8')).hexdigest()
+            else:
+                status_code = response.status_code if response else "unknown"
+                logging.debug( "Received error status {0} when fetching {1}".format(status_code, self.url))
         except Exception as e:
             logging.exception(e)
 
         # Check signature to see if the page has changed 
         # and if we even have to process the content further
         new_content = True
-        if self.old_scraped_page is not None: 
+        if self.old_scraped_page: 
             if self.old_scraped_page.signature == new_page_sig:                
                 new_content = False
                 logging.debug( "No changes detected on {0}".format(self.url))
@@ -155,16 +137,8 @@ class Scraper:
             except Exception as e:
                 logging.exception(e)
 
-        # We only need to fetch new script blocks if the page actually changed
-        if new_content:
-            # Grab any script blocks on the page
-            try:
-                self.script_blocks = self.get_script_blocks(parsed_html)
-            except Exception as e:
-                logging.exception(e)
-
         session.close()
 
         self.internal_urls = set(scraped_urls)
         
-        return self.internal_urls, self.url, new_page_sig, self.script_blocks, new_content
+        return self.internal_urls, self.url, new_page_sig, new_content, raw_content

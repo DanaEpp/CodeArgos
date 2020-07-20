@@ -1,7 +1,6 @@
 import sys
 import sqlite3
 from codeargos.scrapedpage import ScrapedPage
-from codeargos.scriptblock import ScriptBlock, ScriptBlockType
 import threading
 from os.path import isfile, getsize
 import logging
@@ -15,7 +14,6 @@ class DataStore:
 
         # sqlite3 does not like multithreading in python. 
         # We have to remove the thread id check.
-        # self.conn = sqlite3.connect(':memory:', check_same_thread=False) 
         self.conn = sqlite3.connect( db_file_name, check_same_thread=False )
         self.conn.row_factory = sqlite3.Row
 
@@ -34,7 +32,7 @@ class DataStore:
                     pages (
                         url TEXT NOT NULL PRIMARY KEY, 
                         sig TXT NOT NULL, 
-                        scripts TXT,
+                        content TXT,
                         last_update DATETIME DEFAULT CURRENT_TIMESTAMP)
                 """ )
             self.conn.commit()
@@ -46,14 +44,14 @@ class DataStore:
         try:
             self.lock.acquire(True)
             self.db.execute(
-                """INSERT INTO pages VALUES( :url, :sig, :scripts, CURRENT_TIMESTAMP )
+                """INSERT INTO pages VALUES( :url, :sig, :content, CURRENT_TIMESTAMP )
                     ON CONFLICT(url) 
-                        DO UPDATE SET sig=:sig, scripts=:scripts, last_update=CURRENT_TIMESTAMP
+                        DO UPDATE SET sig=:sig, content=:content, last_update=CURRENT_TIMESTAMP
                 """, 
                 { 
                     'url': page.url, 
                     'sig': page.signature, 
-                    'scripts': self.__serialize_script_blocks(page.script_blocks)
+                    'content': page.content
                 })
             self.conn.commit()
         finally:
@@ -69,32 +67,10 @@ class DataStore:
                 page = ScrapedPage( 
                     data['url'], 
                     data['sig'], 
-                    self.__deserialize_script_blocks(data['scripts']))
+                    data['content'])
         finally:
             self.lock.release()
         return page
-
-    def __serialize_script_blocks(self, script_blocks):
-        serialized_data = None
-
-        if script_blocks:
-            try:
-                serialized_data = json.dumps(script_blocks)
-            except Exception as e:
-                logging.exception(e)
-
-        return serialized_data
-
-    def __deserialize_script_blocks(self, blob):
-        script_blocks = None
-        
-        if blob:
-            try:
-                script_blocks = json.loads(blob)
-            except Exception as e:
-                logging.exception(e)
-
-        return script_blocks
 
     def dump_pages(self):
         try:

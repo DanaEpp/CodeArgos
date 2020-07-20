@@ -91,6 +91,6 @@ class CodeArgos:
         # if log_level is not None:
         #     crawler.dump_pages()
 
-        print( "Scan complete: found {0} code file/blocks on {1} pages in {2} that need code review.".format( crawler.script_count, crawler.processed, elapsed_time ) )
+        print( "Scan complete: reviewed {0} pages in {1}.".format( crawler.processed, elapsed_time ) )
 
         

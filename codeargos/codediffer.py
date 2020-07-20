@@ -21,7 +21,6 @@ class CodeDiffer:
         beautiful_old_code = jsbeautifier.beautify(original_code, options).splitlines()
         beautiful_new_code = jsbeautifier.beautify(new_code, options).splitlines()      
 
-
         if self.console_mode:
             diff = difflib.unified_diff(
                 beautiful_old_code, beautiful_new_code,
