@@ -1,0 +1,5 @@
+requests==2.23.0
+colorama==0.4.3
+jsbeautifier==1.11.0
+urllib3==1.25.9
+beautifulsoup4==4.9.1

@@ -7,9 +7,26 @@ The tool can then produce change diffs between scansets to allow security resear
 ## Install
 Install using:
 ```bash 
+git clone https://github.com/DanaEpp/CodeArgos.git 
+cd CodeArgos
 python3 setup.py install 
 ```
 Dependencies will be installed and `codeargos` will be added to your path.
+
+To create a cron job that will run CodeArgos every day:
+```bash
+crontab -e
+```
+Then create an entry that looks something like this:
+
+```bash
+@daily python3 -m /path/to/codeargos -u https://yourtarget.com
+```
+
+This will run CodeArgos once a day, at midnight against your target web app. You can adjust the schedule to meet your needs, and add additional arguments as needed (defined below).
+
+**NOTE:** If you are using CodeArgos against several different targets, try to schedule recon scan windows at least 30 minutes apart. This will allow CodeArgos to maximize your CPU, threads and bandwidth during the web crawling of each target.
+
 ## Usage
 ```bash 
 python3 -m codeargos -u target.com [-t thread_cnt] [-d] [-s] [-f /path/to/your/file.db]
