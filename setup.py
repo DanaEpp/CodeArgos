@@ -4,7 +4,7 @@ from setuptools import setup
 setup(
       name='CodeArgos',
       version='0.2',
-      description='A python module for red teams to support the continious recon of javascript files and HTML script blocks in an active web application.',
+      description='A python module for red teams to support the continuous recon of JavaScript files and HTML script blocks in an active web application.',
       long_description=open('README.md').read(),
       author='Dana Epp',
       author_email='dana@vulscan.com',
