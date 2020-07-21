@@ -29,7 +29,7 @@ This will run CodeArgos once a day, at midnight against your target web app. You
 
 ## Usage
 ```bash 
-python3 -m codeargos -u target.com [-t thread_cnt] [-d] [-s] [-f /path/to/your/file.db] [-w slack --wurl=https://hook.slack.com/some/webhook]
+python3 -m codeargos -u target.com [-t thread_cnt] [-d] [-s] [-f /path/to/your/file.db] [-w slack --wurl https://hook.slack.com/some/webhook]
 ```
 * `-u`, `--url` : The target base URL (with crawl anything it finds underneith it)
 * `-t`, `--threads` [optional] : The number of threads to run. By default it is calculated at 5 times your total CPU count
@@ -37,7 +37,7 @@ python3 -m codeargos -u target.com [-t thread_cnt] [-d] [-s] [-f /path/to/your/f
 * `-s`, `--stats` [optional] : Dump stats to stdout to show progress of crawl
 * `-f`, `--file` [optional] : Reads and stores data across runs using a sqlite database you point to. If not used, default is `target.com.db`, where **target** is the hostname of the URL passed in.
 * `-w`, `--webhook` [optional] : Enables notifications to a webhook. Possible options are *slack*, *teams*, *discord* and *generic*. Requires the `--wurl` param. Use generic when sending to Zapier, IFTTT, Microsoft Logic Apps or Microsoft Flow
-* `--wurl` or `webhookurl` [optional] : The fully qualified path to your webhook endpoint. You need to generate this in your favorite web app (Slack/Teams/Discord etc).
+* `--wurl` or `--webhookurl` [optional] : The fully qualified path to your webhook endpoint. You need to generate this in your favorite web app (Slack/Teams/Discord etc).
 
 ## Webhooks support
 For more information on setting up webhook notifications for your favorite apps please see:
