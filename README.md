@@ -29,13 +29,22 @@ This will run CodeArgos once a day, at midnight against your target web app. You
 
 ## Usage
 ```bash 
-python3 -m codeargos -u target.com [-t thread_cnt] [-d] [-s] [-f /path/to/your/file.db]
+python3 -m codeargos -u target.com [-t thread_cnt] [-d] [-s] [-f /path/to/your/file.db] [-w slack --wurl=https://hook.slack.com/some/webhook]
 ```
 * `-u`, `--url` : The target base URL (with crawl anything it finds underneith it)
 * `-t`, `--threads` [optional] : The number of threads to run. By default it is calculated at 5 times your total CPU count
 * `-d`, `--debug` [optional] : Write out debug information to local log file (codeargos.log)
 * `-s`, `--stats` [optional] : Dump stats to stdout to show progress of crawl
 * `-f`, `--file` [optional] : Reads and stores data across runs using a sqlite database you point to. If not used, default is `target.com.db`, where **target** is the hostname of the URL passed in.
+* `-w`, `--webhook` [optional] : Enables notifications to a webhook. Possible options are *slack*, *teams*, *discord* and *generic*. Requires the `--wurl` param. Use generic when sending to Zapier, IFTTT, Microsoft Logic Apps or Microsoft Flow
+* `--wurl` or `webhookurl` [optional] : The fully qualified path to your webhook endpoint. You need to generate this in your favorite web app (Slack/Teams/Discord etc).
+
+## Webhooks support
+For more information on setting up webhook notifications for your favorite apps please see:
+* **Slack** : [Detailed instructions](https://api.slack.com/messaging/webhooks). To setup your first one [go here](https://my.slack.com/services/new/incoming-webhook/).
+* **Microsoft Teams** : TBA
+* **Discord** : TBA
+* **Generic webhook** : TBA
 
 ## Tips
 If you are having any difficulties in crawling your target web app, consider dialing back the threads used. By default it will select five times the number of CPUs you have. I've found the most success with `-t 10` on targets behind difficult WAFs. While there is an incrimental backoff retry pattern in the tool, the reality is CodeArgos can be agressive on its initial scan as it populates it's database. 

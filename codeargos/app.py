@@ -27,7 +27,7 @@ class CodeArgos:
 
     @classmethod
     def display_usage(cls):
-        print( 'codeargos.py -u example.com [-t thread_cnt] [-d] [-s] [-f /path/to/your.db]' )       
+        print( 'codeargos.py -u example.com [-t thread_cnt] [-d] [-s] [-f /path/to/your.db] [-w slack --wurl=https://hook.slack.com/some/webhook]' )       
 
     @staticmethod
     def run(argv):
