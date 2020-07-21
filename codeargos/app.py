@@ -34,7 +34,7 @@ class CodeArgos:
         CodeArgos.print_banner()
 
         try:
-            opts, args = getopt.getopt(argv, "hu:t:dsf:", ["help", "url=", "threads=", "debug", "stats", "f"])
+            opts, args = getopt.getopt(argv, "hu:t:dsf:w:", ["help", "url=", "threads=", "debug", "stats", "file", "webhook=", "wurl=", "webhookurl="])
         except getopt.GetoptError as err:
             logging.exception(err)
             logging.debug("opts: {0} | args: {1}".format(opts, args))
@@ -45,6 +45,8 @@ class CodeArgos:
         log_level = None
         show_stats = False
         db_file_path = None
+        webhook_type = ""
+        webhook_url = ""
 
         for opt, arg in opts:
             if opt in ( "-h", "--help"):
@@ -64,6 +66,10 @@ class CodeArgos:
                 show_stats = True
             elif opt in ( "-f", "--file" ):
                 db_file_path = arg
+            elif opt in ( "-w", "--webhook" ):
+                webhook_type = arg.lower()
+            elif opt in ( "--wurl", "--webhookurl" ):
+                webhook_url = arg
 
         if log_level is None:
             logging.basicConfig( 
@@ -82,7 +88,7 @@ class CodeArgos:
         print( "Attempting to scan {0} across {1} threads...".format(CodeArgos.target_host, threads))
         print( "Starting scan at {0} UTC".format(scan_start.strftime("%Y-%m-%d %H:%M")) )
 
-        crawler = WebCrawler(CodeArgos.target_host, threads, show_stats, db_file_path)
+        crawler = WebCrawler(CodeArgos.target_host, threads, show_stats, db_file_path, webhook_type, webhook_url)
         crawler.start()
 
         scan_end = datetime.now(timezone.utc)

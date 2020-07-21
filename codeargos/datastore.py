@@ -40,6 +40,7 @@ class DataStore:
             self.db.execute( 
                 """CREATE TABLE IF NOT EXISTS 
                     diffs (
+                        diff_id INTEGER PRIMARY KEY AUTOINCREMENT,
                         url TEXT, 
                         content TXT,
                         last_update DATETIME DEFAULT CURRENT_TIMESTAMP)
@@ -67,6 +68,7 @@ class DataStore:
             self.lock.release()
 
     def add_diff(self, url, diff_content):
+        last_id = -1
         try:
             self.lock.acquire(True)
             # We store the history of all code changes.            
@@ -77,8 +79,12 @@ class DataStore:
                     'content': diff_content
                 })
             self.conn.commit()
+
+            last_id = self.db.lastrowid
         finally:
             self.lock.release()
+
+        return last_id
             
     def get_page(self, url):
         page = None

@@ -9,10 +9,11 @@ import time
 from codeargos.scraper import Scraper
 from codeargos.datastore import DataStore
 from codeargos.scrapedpage import ScrapedPage
+from codeargos.webhook import WebHookType, WebHook
 from urllib.parse import urlparse
 
 class WebCrawler:
-    def __init__(self, seed_url, threads, stats, db_file_path):
+    def __init__(self, seed_url, threads, stats, db_file_path, webhook_type, webhook_url):
         self.seed_url = seed_url
         self.pool = ThreadPoolExecutor(max_workers=threads)
         self.processed_urls = set([])
@@ -21,12 +22,20 @@ class WebCrawler:
         self.show_stats = stats
         self.scripts_found = 0
 
-        db_name = "unknown.db"
+        # Setup local sqlite database
+        self.db_name = "unknown.db"
         if db_file_path is None:
-            db_name = self.gen_db_name(seed_url)
+            self.db_name = self.gen_db_name(seed_url)
         else:
-            db_name = db_file_path
-        self.data_store = DataStore(db_name)
+            self.db_name = db_file_path
+        self.data_store = DataStore(self.db_name)
+
+        # Setup optional webhook for notifications
+        if self.setup_webhook(webhook_url, webhook_type):
+            self.webhook = WebHook(self.webhook_url, self.webhook_type)
+        else:
+            self.webhook = None    
+
         signal.signal(signal.SIGINT, self.dump_data)
 
     def __del__(self):       
@@ -46,6 +55,42 @@ class WebCrawler:
             logging.exception(e)
 
         return target + ".db" 
+
+    def setup_webhook(self, url, hooktype):
+
+        webhook_enabled = False
+
+        if hooktype and url:
+            msg = ""
+            self.webhook_url = url
+            if hooktype == "slack":
+                self.webhook_type = WebHookType.SLACK
+                msg = "Configured SLACK webhook to {0}".format(self.webhook_url)
+            elif hooktype == "teams":
+                self.webhook_type = WebHookType.TEAMS
+                msg = "Configured TEAMS webhook to {0}".format(self.webhook_url)
+            elif hooktype == "discord":
+                self.webhook_type = WebHookType.DISCORD
+                msg = "Configured DISCORD webhook to {0}".format(self.webhook_url)
+            elif hooktype == "generic":
+                self.webhook_type = WebHookType.GENERIC
+                msg = "Configured GENERIC webhook to {0}".format(self.webhook_url)
+            else:
+                self.webhook_type = WebHookType.NONE
+                self.webhook_url = ""
+                msg = "Couldn't properly parse out the webhook settings. Ignoring and will not send webhook notifications."
+            
+            logging.debug( msg ) 
+
+            if self.webhook_url:
+                webhook_enabled = True 
+        else:
+            self.webhook_type = WebHookType.NONE
+            self.webhook_url = ""
+            logging.debug( "No webhooks configured.")
+            webhook_enabled = False
+
+        return webhook_enabled
 
     def dump_data(self, signal, frame):
         choice = input( "\nEarly abort detected. Dump data already collected? (to processed.txt): [y/N] ")
@@ -72,7 +117,8 @@ class WebCrawler:
             page = ScrapedPage(url, sig, raw_content)
             self.data_store.add_page(page)
             if diff_content:
-                self.data_store.add_diff(url,diff_content)                
+                diff_id = self.data_store.add_diff(url,diff_content)
+                self.notify_webhook(url, diff_id)                
 
         # also add scraped links to queue if they
         # aren't already queued or already processed
@@ -89,6 +135,11 @@ class WebCrawler:
 
     def dump_pages(self):
         self.data_store.dump_pages()
+
+    def notify_webhook(self, url, diff_id):
+        if self.webhook:
+            message = "Changes detected on {0}. Review in {1} [#diff: {2}]".format(url, self.db_name, diff_id)
+            self.webhook.notify(message)
 
     def start(self):
         LOG_EVERY_N = 500
