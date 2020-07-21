@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from pprint import pprint
 import hashlib
 from codeargos.scrapedpage import ScrapedPage
+from codeargos.codediffer import CodeDiffer, CodeDifferMode
 
 class Scraper:
 
@@ -93,7 +94,8 @@ class Scraper:
         return links    
 
     def scrape(self):
-        raw_content = "" 
+        raw_content = ""
+        diff_content = "" 
         parsed_html = ""
         new_page_sig = ""
         session = requests.session()
@@ -132,6 +134,8 @@ class Scraper:
                 msg = "Changes detected on {0}".format(self.url)
                 print(msg)
                 logging.debug(msg)
+                differ = CodeDiffer(True, CodeDifferMode.UNIFIED)
+                diff_content = differ.diff( self.url, self.old_scraped_page.content, raw_content )
         
         scraped_urls = []    
         if len(parsed_html) > 0:
@@ -144,4 +148,4 @@ class Scraper:
 
         self.internal_urls = set(scraped_urls)
         
-        return self.internal_urls, self.url, new_page_sig, new_content, raw_content
+        return self.internal_urls, self.url, new_page_sig, new_content, raw_content, diff_content

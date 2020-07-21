@@ -36,6 +36,15 @@ class DataStore:
                         last_update DATETIME DEFAULT CURRENT_TIMESTAMP)
                 """ )
             self.conn.commit()
+
+            self.db.execute( 
+                """CREATE TABLE IF NOT EXISTS 
+                    diffs (
+                        url TEXT, 
+                        content TXT,
+                        last_update DATETIME DEFAULT CURRENT_TIMESTAMP)
+                """ )
+            self.conn.commit()
         finally:
             self.lock.release()                
 
@@ -52,6 +61,20 @@ class DataStore:
                     'url': page.url, 
                     'sig': page.signature, 
                     'content': page.content
+                })
+            self.conn.commit()
+        finally:
+            self.lock.release()
+
+    def add_diff(self, url, diff_content):
+        try:
+            self.lock.acquire(True)
+            # We store the history of all code changes.            
+            self.db.execute(
+                """INSERT INTO diffs VALUES( :url, :content, CURRENT_TIMESTAMP )""", 
+                { 
+                    'url': url, 
+                    'content': diff_content
                 })
             self.conn.commit()
         finally:

@@ -1,1 +1,1 @@
-var fubar = "Oh yeah!!"
+var fubar = "Oh yeah!"

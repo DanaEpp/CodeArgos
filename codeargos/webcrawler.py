@@ -58,7 +58,12 @@ class WebCrawler:
 
     def process_scraper_results(self, future):
         # get the items of interest from the future object
-        internal_urls, url, sig, new_content, raw_content = future._result[0], future._result[1], future._result[2], future._result[3], future._result[4]
+        internal_urls = future._result[0]
+        url = future._result[1]
+        sig = future._result[2]
+        new_content = future._result[3]
+        raw_content = future._result[4]
+        diff_content = future._result[5]
         
         # There are occassions when an unknown media type gets through and 
         # can't be properly hashed, which leaves sig empty. Instead of b0rking, 
@@ -66,6 +71,8 @@ class WebCrawler:
         if new_content and sig:
             page = ScrapedPage(url, sig, raw_content)
             self.data_store.add_page(page)
+            if diff_content:
+                self.data_store.add_diff(url,diff_content)                
 
         # also add scraped links to queue if they
         # aren't already queued or already processed

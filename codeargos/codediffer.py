@@ -5,11 +5,17 @@ import sys
 from colorama import Fore, Back, Style, init
 import pprint
 import jsbeautifier
+from enum import IntEnum
+from itertools import tee
+
+class CodeDifferMode(IntEnum):
+    UNIFIED = 0
+    HTML = 1
 
 class CodeDiffer:
-    def __init__(self, console_mode=True):
-        self.console_mode = console_mode
-        pass
+    def __init__(self, console=False, mode=CodeDifferMode.UNIFIED):
+        self.console = console
+        self.mode = mode
     
     def diff(self, url, original_code, new_code):
         diff_data = ""
@@ -19,41 +25,38 @@ class CodeDiffer:
             "keep_function_indentation": True,
             "keep_array_indentation": True,
             "jslint_happy": True
-            # "html": {
-            #     "end_with_newline": True,
-            #     "js": {
-            #         "indent_size": 2
-            #     },
-            #     "css": {
-            #         "indent_size": 2
-            #     }
-            # },
-            # "css": {
-            #     "indent_size": 1
-            # },
-            # "js": {
-            #     "preserve_newlines": True
-            # }
         }
 
         beautiful_old_code = jsbeautifier.beautify(original_code, options).splitlines()
         beautiful_new_code = jsbeautifier.beautify(new_code, options).splitlines()      
 
-        if self.console_mode:
-            diff = difflib.unified_diff(
+        if self.mode == CodeDifferMode.UNIFIED:
+            delta = difflib.unified_diff(
                 beautiful_old_code, beautiful_new_code,
                 fromfile="before", tofile="after",
                 lineterm="")
 
-            color_diff = self.__color_diff(diff)
-            print( "[CHANGED FILE] {0}".format(url))
-            print('\n'.join(color_diff))
-            diff_data = '\n'.join(diff)
+            # Create copies of the iterator so we can manipulate the colored one
+            # seperately without storing it to the database with the ansi chars
+            raw_delta, color_delta = tee(delta)
+
+            diff_data = '\n'.join(raw_delta)
+            
+            if self.console:
+                print( "[CHANGED FILE] {0}".format(url))
+                color_diff = self.__color_diff(color_delta)            
+                print('\n'.join(color_diff))
+            
             return diff_data
         else:
             # Generate an HTML diff file
             differ = difflib.HtmlDiff()
             diff_data = differ.make_file( beautiful_old_code, beautiful_new_code )
+            
+            if self.console:
+                print( "[CHANGED FILE] {0}".format(url))
+                print(diff_data)
+
             return diff_data
         
     def __color_diff(self, diff):
@@ -65,5 +68,4 @@ class CodeDiffer:
             elif line.startswith('^'):
                 yield Fore.BLUE + line + Fore.RESET
             else:
-                yield line
-
+                yield line        
