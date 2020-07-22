@@ -11,5 +11,5 @@ setup(
       url='https://github.com/danaepp/codeargos',
       license='MIT',
       packages=['codeargos'],
-      install_requires=[ 'requests', 'colorama', 'jsbeautifier', 'urllib3', 'beautifulsoup4' ]
+      install_requires=[ 'requests', 'colorama', 'jsbeautifier', 'urllib3', 'beautifulsoup4', 'pymsteams' ]
      )

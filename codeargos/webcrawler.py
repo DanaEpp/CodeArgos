@@ -139,7 +139,7 @@ class WebCrawler:
     def notify_webhook(self, url, diff_id):
         if self.webhook:
             message = "Changes detected on {0}. Review in {1} [#diff: {2}]".format(url, self.db_name, diff_id)
-            self.webhook.notify(message)
+            self.webhook.notify(message, url)
 
     def start(self):
         LOG_EVERY_N = 500
