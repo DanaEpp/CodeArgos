@@ -7,8 +7,14 @@ import re
 from codeargos.__version__ import __version__
 import codeargos.Constants as Constants
 from codeargos.webcrawler import WebCrawler
+from codeargos.displaydiff import DisplayDiff
 from datetime import tzinfo, timedelta, datetime, timezone
 import logging
+from enum import IntEnum
+
+class CodeArgosMode(IntEnum):
+    RECON = 0
+    REVIEW = 1
 
 class CodeArgos:
 
@@ -27,14 +33,20 @@ class CodeArgos:
 
     @classmethod
     def display_usage(cls):
-        print( 'codeargos.py -u example.com [-t thread_cnt] [-d] [-s] [-f /path/to/your.db] [-w slack --wurl=https://hook.slack.com/some/webhook]' )       
+        print( ' RECON: codeargos.py -u example.com\n\t[-t thread_cnt] [-d] [-s] [-f /path/to/your.db]\n\t[-w slack --wurl=https://hook.slack.com/some/webhook]' )       
+        print( 'REVIEW: codeargos.py --diff 123 -f /path/to/your.db' )       
+        print('\n')
 
     @staticmethod
     def run(argv):
         CodeArgos.print_banner()
 
+        # Default to recon mode
+        mode = CodeArgosMode.RECON
+        diff_id = 0
+
         try:
-            opts, args = getopt.getopt(argv, "hu:t:dsf:w:", ["help", "url=", "threads=", "debug", "stats", "file", "webhook=", "wurl=", "webhookurl="])
+            opts, args = getopt.getopt(argv, "hu:t:dsf:w:", ["help", "url=", "threads=", "debug", "stats", "file", "webhook=", "wurl=", "webhookurl=", "diff="])
         except getopt.GetoptError as err:
             logging.exception(err)
             logging.debug("opts: {0} | args: {1}".format(opts, args))
@@ -44,7 +56,7 @@ class CodeArgos:
         threads = os.cpu_count() * 5
         log_level = None
         show_stats = False
-        db_file_path = None
+        db_file_path = ""
         webhook_type = ""
         webhook_url = ""
 
@@ -70,6 +82,11 @@ class CodeArgos:
                 webhook_type = arg.lower()
             elif opt in ( "--wurl", "--webhookurl" ):
                 webhook_url = arg
+            elif opt in ("--diff"):
+                try:
+                    diff_id = int(arg)
+                except Exception as e:
+                    logging.exception(e)                    
 
         if log_level is None:
             logging.basicConfig( 
@@ -84,19 +101,28 @@ class CodeArgos:
                 format='%(asctime)s [%(levelname)s] %(message)s',
                 datefmt='%m/%d/%Y %I:%M:%S %p' )
 
-        scan_start = datetime.now(timezone.utc)
-        print( "Attempting to scan {0} across {1} threads...".format(CodeArgos.target_host, threads))
-        print( "Starting scan at {0} UTC".format(scan_start.strftime("%Y-%m-%d %H:%M")) )
+        if diff_id > 0 and db_file_path:
+            mode = CodeArgosMode.REVIEW
 
-        crawler = WebCrawler(CodeArgos.target_host, threads, show_stats, db_file_path, webhook_type, webhook_url)
-        crawler.start()
+        if mode == CodeArgosMode.REVIEW:
+            diff_viewer = DisplayDiff(db_file_path)
+            diff_viewer.show(diff_id)            
+        else:
+            if CodeArgos.target_host:
+                scan_start = datetime.now(timezone.utc)
+                print( "Attempting to scan {0} across {1} threads...".format(CodeArgos.target_host, threads))
+                print( "Starting scan at {0} UTC".format(scan_start.strftime("%Y-%m-%d %H:%M")) )
 
-        scan_end = datetime.now(timezone.utc)
-        elapsed_time = scan_end - scan_start
-        
-        # if log_level is not None:
-        #     crawler.dump_pages()
+                crawler = WebCrawler(CodeArgos.target_host, threads, show_stats, db_file_path, webhook_type, webhook_url)
+                crawler.start()
 
-        print( "Scan complete: reviewed {0} pages in {1}.".format( crawler.processed, elapsed_time ) )
+                scan_end = datetime.now(timezone.utc)
+                elapsed_time = scan_end - scan_start
+                
+                print( "Scan complete: reviewed {0} pages in {1}.".format( crawler.processed, elapsed_time ) )
+            else:
+                print( "Missing target (-u) parameter. Aborting!")
+                CodeArgos.display_usage()
+
 
         

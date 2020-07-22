@@ -1,6 +1,7 @@
 import sys
 import sqlite3
 from codeargos.scrapedpage import ScrapedPage
+from codeargos.diff import Diff
 import threading
 from os.path import isfile, getsize
 import logging
@@ -31,8 +32,8 @@ class DataStore:
                 """CREATE TABLE IF NOT EXISTS 
                     pages (
                         url TEXT NOT NULL PRIMARY KEY, 
-                        sig TXT NOT NULL, 
-                        content TXT,
+                        sig TEXT NOT NULL, 
+                        content TEXT,
                         last_update DATETIME DEFAULT CURRENT_TIMESTAMP)
                 """ )
             self.conn.commit()
@@ -40,9 +41,9 @@ class DataStore:
             self.db.execute( 
                 """CREATE TABLE IF NOT EXISTS 
                     diffs (
-                        diff_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                         url TEXT, 
-                        content TXT,
+                        content TEXT,
                         last_update DATETIME DEFAULT CURRENT_TIMESTAMP)
                 """ )
             self.conn.commit()
@@ -73,8 +74,9 @@ class DataStore:
             self.lock.acquire(True)
             # We store the history of all code changes.            
             self.db.execute(
-                """INSERT INTO diffs VALUES( :url, :content, CURRENT_TIMESTAMP )""", 
+                """INSERT INTO diffs VALUES( :id, :url, :content, CURRENT_TIMESTAMP )""", 
                 { 
+                    'id': None,
                     'url': url, 
                     'content': diff_content
                 })
@@ -100,6 +102,23 @@ class DataStore:
         finally:
             self.lock.release()
         return page
+
+    def get_diff(self, diff_id):
+        diff = None
+        try:
+            self.lock.acquire(True)
+            self.db.execute("SELECT * FROM diffs WHERE id=:id", {'id': diff_id})
+            data = self.db.fetchone()
+            if data:
+                diff = Diff(
+                    diff_id, 
+                    data['url'], 
+                    data['content'],
+                    data['last_update']
+                    )
+        finally:
+            self.lock.release()
+        return diff
 
     def dump_pages(self):
         try:
