@@ -40,6 +40,10 @@ python3 -m codeargos -u target.com [-t thread_cnt] [-d] [-s] [-f /path/to/your/f
 * `--wurl` or `--webhookurl` [optional] : The fully qualified path to your webhook endpoint. You need to generate this in your favorite web app (Slack/Teams/Discord etc).
 
 ## Webhooks support
+To assist in notifying your red team of recent code changes, or to get ahead of other bug bounty hunters who may be competing on the same target, consider using webhook notifications. Here is a real life example that got me a $1,000 bounty because I was able to 'get there first'.
+
+> ![Slack notification](CodeArgos-Slack-Notification.png)
+
 For more information on setting up webhook notifications for your favorite apps please see:
 * **Slack** : [Detailed instructions](https://api.slack.com/messaging/webhooks). To setup your first one [go here](https://my.slack.com/services/new/incoming-webhook/).
 * **Microsoft Teams** : TBA
