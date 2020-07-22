@@ -28,9 +28,16 @@ This will run CodeArgos once a day, at midnight against your target web app. You
 **NOTE:** If you are using CodeArgos against several different targets, try to schedule recon scan windows at least 30 minutes apart. This will allow CodeArgos to maximize your CPU, threads and bandwidth during the web crawling of each target.
 
 ## Usage
+When used for RECON:
 ```bash 
 python3 -m codeargos -u target.com [-t thread_cnt] [-d] [-s] [-f /path/to/your/file.db] [-w slack --wurl https://hook.slack.com/some/webhook]
 ```
+When used to REVIEW a diff after detection during RECON:
+When used for RECON:
+```bash 
+python3 -m codeargos -f /path/to/your/file.db --diff id_num
+```
+
 * `-u`, `--url` : The target base URL (with crawl anything it finds underneith it)
 * `-t`, `--threads` [optional] : The number of threads to run. By default it is calculated at 5 times your total CPU count
 * `-d`, `--debug` [optional] : Write out debug information to local log file (codeargos.log)
@@ -38,6 +45,7 @@ python3 -m codeargos -u target.com [-t thread_cnt] [-d] [-s] [-f /path/to/your/f
 * `-f`, `--file` [optional] : Reads and stores data across runs using a sqlite database you point to. If not used, default is `target.com.db`, where **target** is the hostname of the URL passed in.
 * `-w`, `--webhook` [optional] : Enables notifications to a webhook. Possible options are *slack*, *teams*, *discord* and *generic*. Requires the `--wurl` param. Use generic when sending to Zapier, IFTTT, Microsoft Logic Apps or Microsoft Flow
 * `--wurl` or `--webhookurl` [optional] : The fully qualified path to your webhook endpoint. You need to generate this in your favorite web app (Slack/Teams/Discord etc).
+* `--diff` : The diff id sent to you by the webhook notification service. Also requires the `-f` option to know which db to read the diff from.
 
 ## Webhooks support
 To assist in notifying your red team of recent code changes, or to get ahead of other bug bounty hunters who may be competing on the same target, consider using webhook notifications. Here is a real life example that got me a $1,000 bounty because I was able to 'get there first'.
