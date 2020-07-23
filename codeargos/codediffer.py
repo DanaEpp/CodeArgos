@@ -6,11 +6,7 @@ from colorama import Fore, Back, Style, init
 import pprint
 import jsbeautifier
 from enum import IntEnum
-from itertools import tee
-
-class CodeDifferMode(IntEnum):
-    UNIFIED = 0
-    HTML = 1
+from codeargos.enums import CodeDifferMode
 
 class CodeDiffer:
     def __init__(self, console=False, mode=CodeDifferMode.UNIFIED):

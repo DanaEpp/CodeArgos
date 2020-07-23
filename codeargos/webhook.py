@@ -1,16 +1,10 @@
 #!/usr/bin/env python3
 from enum import IntEnum
+from codeargos.enums import WebHookType
 import logging
 import requests
 import json
 import pymsteams
-
-class WebHookType(IntEnum):
-    NONE = 0
-    GENERIC = 1
-    SLACK = 2
-    TEAMS = 3
-    DISCORD = 4
 
 class WebHook:
     def __init__(self, url, hooktype=WebHookType.GENERIC):
