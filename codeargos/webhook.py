@@ -49,7 +49,7 @@ class WebHook:
                 logging.debug( "Failed to send notification via Slack. Server response: {0}".format(response.text))
         except Exception as e:            
             logging.exception(e)
-            
+
     # See https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook
     def __send_to_teams(self, message, code_url):
         logging.debug( "[TEAMS] {0}".format(message))
@@ -65,3 +65,16 @@ class WebHook:
     
     def __send_to_discord(self, message):
         logging.debug( "[DISCORD] {0}".format(message))
+
+        data = {
+            'content': message,
+            'username': 'codeargos'
+        }
+
+        try:
+            response = requests.post( self.url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
+            if not response.ok:
+                logging.debug( "Failed to send notification via Discord. Server response: {0}".format(response.text))
+
+        except Exception as e:
+            logging.exception(e)

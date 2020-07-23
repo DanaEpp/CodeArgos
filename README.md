@@ -33,7 +33,6 @@ When used for RECON:
 python3 -m codeargos -u target.com [-t thread_cnt] [-d] [-s] [-f /path/to/your/file.db] [-w slack --wurl https://hook.slack.com/some/webhook]
 ```
 When used to REVIEW a diff after detection during RECON:
-When used for RECON:
 ```bash 
 python3 -m codeargos -f /path/to/your/file.db --diff id_num
 ```
@@ -56,10 +55,14 @@ Here is another example in Microsoft Teams. Note the "View Code" button launches
 
 > ![Teams notification](CodeArgos-Teams-Notification.png)
 
+Finally, here is an example of message being send to Discord.
+
+> ![Discord notification](CodeArgos-Discord-Notification.png)
+
 For more information on setting up webhook notifications for your favorite apps please see:
 * **Slack** : [Detailed instructions](https://api.slack.com/messaging/webhooks). To setup your first one [go here](https://my.slack.com/services/new/incoming-webhook/).
 * **Microsoft Teams** : [Detailed instructions](https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook)
-* **Discord** : TBA
+* **Discord** : [Detailed instructions](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks)
 * **Generic webhook** : TBA
 
 ## Tips
