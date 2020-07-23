@@ -57,15 +57,15 @@ python3 -m codeargos -f /path/to/your/file.db --diff id_num
 ## Webhooks support
 To assist in notifying your red team of recent code changes, or to get ahead of other bug bounty hunters who may be competing on the same target, consider using webhook notifications. Here is a real life example that got me a $1,000 bounty because I was able to 'get there first'.
 
-> ![Slack notification](CodeArgos-Slack-Notification.png)
+> ![Slack notification](images/CodeArgos-Slack-Notification.png)
 
 Here is another example in Microsoft Teams. Note the "View Code" button launches a browser directly to the affected page:
 
-> ![Teams notification](CodeArgos-Teams-Notification.png)
+> ![Teams notification](images/CodeArgos-Teams-Notification.png)
 
 Finally, here is an example of message being sent to Discord.
 
-> ![Discord notification](CodeArgos-Discord-Notification.png)
+> ![Discord notification](images/CodeArgos-Discord-Notification.png)
 
 For more information on setting up webhook notifications for your favorite apps please see:
 * **Slack** : [Detailed instructions](https://api.slack.com/messaging/webhooks). To setup your first one [go here](https://my.slack.com/services/new/incoming-webhook/).
@@ -96,7 +96,7 @@ By defining it in that way, the Logic App will parse out the payload and allow d
 
 Here is a sample workflow that will send it to a Google Gmail account:
 
-![Microsoft Logic App](CodeArgos-LogicApp.png)
+![Microsoft Logic App](images/CodeArgos-LogicApp.png)
 
 Have fun with it. Generic webhooks and Logic Apps can do some pretty powerful things.
 
