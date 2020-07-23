@@ -21,7 +21,7 @@ class WebHook:
         if message:
             # Why oh why can't python support switch/case??? >:( 
             if self.hooktype == WebHookType.GENERIC:
-                self.__send_to_generic_webhook(message)
+                self.__send_to_generic_webhook(message, code_url)
             elif self.hooktype == WebHookType.SLACK:
                 self.__send_to_slack(message)
             elif self.hooktype == WebHookType.TEAMS:
@@ -29,8 +29,21 @@ class WebHook:
             elif self.hooktype == WebHookType.DISCORD:
                 self.__send_to_discord(message)
 
-    def __send_to_generic_webhook(self, message):
+    def __send_to_generic_webhook(self, message, code_url):
         logging.debug( "[WEBHOOK] {0}".format(message))
+
+        data = {
+            'content': message,
+            'username': 'codeargos',
+            'code_url': code_url
+        }
+
+        try:
+            response = requests.post( self.url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
+            if not response.ok:
+                logging.debug( "Failed to send notification via Generic webhook. Server response: {0}".format(response.text))
+        except Exception as e:
+            logging.exception(e)
         
     # See https://api.slack.com/messaging/webhooks for more info
     def __send_to_slack(self, message):

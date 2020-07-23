@@ -64,6 +64,34 @@ For more information on setting up webhook notifications for your favorite apps 
 * **Microsoft Teams** : [Detailed instructions](https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook)
 * **Discord** : [Detailed instructions](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks)
 
+### Working with generic webhooks like Microsoft Logic Apps
+If you are wanting to get notifications to a different device or email, consider using the "generic" webhook option and configure it to point to a [Microsoft Logic App](https://azure.microsoft.com/en-us/services/logic-apps/). When defining the HTTP receive endpoint in Azure use the following Request Body JSON Schema:
+
+```
+{
+    "properties": {
+        "code_url": {
+            "type": "string"
+        },
+        "content": {
+            "type": "string"
+        },
+        "username": {
+            "type": "string"
+        }
+    },
+    "type": "object"
+}
+```
+
+By defining it in that way, the Logic App will parse out the payload and allow direct dynamic content variables for use in your workflow. From there you can do anything with the payload, from sending it via SMS to your phone or directly to email.
+
+Here is a sample workflow that will send it to a Google Gmail account:
+
+![Microsoft Logic App](CodeArgos-LogicApp.png)
+
+Have fun with it. Generic webhooks and Logic Apps can do some pretty powerful things.
+
 ## Tips
 If you are having any difficulties in crawling your target web app, consider dialing back the threads used. By default it will select five times the number of CPUs you have. I've found the most success with `-t 10` on targets behind difficult WAFs and load balancers. While there is an incrimental backoff retry pattern in the tool, the reality is CodeArgos can be aggressive on its initial scan as it populates it's database. 
 
