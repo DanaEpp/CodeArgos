@@ -29,7 +29,7 @@ class CodeArgos:
 
     @classmethod
     def display_usage(cls):
-        print( ' RECON: codeargos.py -u example.com\n\t[-t thread_cnt] [-d] [-s] [-f /path/to/your.db]\n\t[-w slack --wurl=https://hook.slack.com/some/webhook]' )       
+        print( ' RECON: codeargos.py -u example.com\n\t[-t thread_cnt] [-d] [-s] [-f /path/to/your.db]\n\t[-w generic|slack|teams|discord --wurl=https://hook.slack.com/some/webhook]\n\t[-p diff|id|both|none]' )       
         print( 'REVIEW: codeargos.py --diff 123 -f /path/to/your.db' )       
         print('\n')
 

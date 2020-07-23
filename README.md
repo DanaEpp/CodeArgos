@@ -30,7 +30,10 @@ This will run CodeArgos once a day, at midnight against your target web app. You
 ## Usage
 When used for RECON:
 ```bash 
-python3 -m codeargos -u target.com [-t thread_cnt] [-d] [-s] [-f /path/to/your/file.db] [-w slack --wurl https://hook.slack.com/some/webhook]
+python3 -m codeargos -u target.com 
+        [-t thread_cnt] [-d] [-s] [-f /path/to/your/file.db] 
+        [-w generic|slack|teams|discord --wurl https://hook.slack.com/some/webhook]
+        [-p id|diff|both|none]
 ```
 When used to REVIEW a diff after detection during RECON:
 ```bash 
@@ -45,6 +48,11 @@ python3 -m codeargos -f /path/to/your/file.db --diff id_num
 * `-w`, `--webhook` [optional] : Enables notifications to a webhook. Possible options are *slack*, *teams*, *discord* and *generic*. Requires the `--wurl` param. Use generic when sending to Zapier, IFTTT, Microsoft Logic Apps or Microsoft Flow
 * `--wurl` or `--webhookurl` [optional] : The fully qualified path to your webhook endpoint. You need to generate this in your favorite web app (Slack/Teams/Discord etc).
 * `--diff` : The diff id sent to you by the webhook notification service. Also requires the `-f` option to know which db to read the diff from.
+* `-p` or `--print` [optional] : Determines how results are displayed. Options include:
+  *  **id** : Shows a list of diff ids
+  *  **diff** : Shows the actual diffs between scans
+  *  **both** : Shows both the diffs and then the list of ids (default)
+  *  **none** : Useful in first time run or when you expect to use notifications to send results
 
 ## Webhooks support
 To assist in notifying your red team of recent code changes, or to get ahead of other bug bounty hunters who may be competing on the same target, consider using webhook notifications. Here is a real life example that got me a $1,000 bounty because I was able to 'get there first'.
