@@ -3,26 +3,31 @@ import re
 import sys
 import signal
 from queue import Queue, Empty
-from concurrent.futures import ThreadPoolExecutor
+from typing import List
+from concurrent.futures import ThreadPoolExecutor, Future, ALL_COMPLETED
+import concurrent
 import logging
 import time
+import pprint
 from codeargos.scraper import Scraper
 from codeargos.datastore import DataStore
 from codeargos.scrapedpage import ScrapedPage
 from codeargos.displaydiff import DisplayDiff
 from codeargos.webhook import WebHookType, WebHook
+from codeargos.enums import CodeArgosPrintMode
 from urllib.parse import urlparse
 
 class WebCrawler:
-    def __init__(self, seed_url, threads, stats, db_file_path, webhook_type, webhook_url):
+    def __init__(self, seed_url, threads, stats, db_file_path, webhook_type, webhook_url, print_mode):
         self.seed_url = seed_url
-        self.pool = ThreadPoolExecutor(max_workers=threads)
+        self.pool = ThreadPoolExecutor(max_workers=threads)        
         self.processed_urls = set([])
         self.queued_urls = Queue()
         self.queued_urls.put(self.seed_url)
         self.show_stats = stats
         self.scripts_found = 0
         self.diff_list = set([])
+        self.print_mode = print_mode
 
         # Setup local sqlite database
         self.db_name = "unknown.db"
@@ -147,9 +152,11 @@ class WebCrawler:
     def start(self):
         LOG_EVERY_N = 500
         i = 0
+
+        jobs = []
         
         while True:
-            try:
+            try:                
                 # get a url from the queue
                 target_url = self.queued_urls.get(timeout=15)
 
@@ -165,6 +172,7 @@ class WebCrawler:
 
                     job = self.pool.submit(Scraper(target_url, scraped_page).scrape)
                     job.add_done_callback(self.process_scraper_results)
+                    jobs.append(job)
 
                 if self.show_stats:
                     if i % LOG_EVERY_N == 0:
@@ -176,13 +184,26 @@ class WebCrawler:
                 i=i+1
             except Empty:
                 logging.debug("All queues and jobs complete.")                
+                
+                # We need to wait until all child threads/jobs have completed before we can dump
+                # the diffs. If we don't wait, we may miss a few children still being processed and
+                # could cause a runtime exception due to the diff_list size changing.
+                concurrent.futures.wait(jobs, timeout=None, return_when=ALL_COMPLETED)
+
+                if len(self.diff_list) > 0:
+                    diff_viewer = DisplayDiff(self.db_name)
+                    
+                    try:
+                        if self.print_mode == CodeArgosPrintMode.DIFF or self.print_mode == CodeArgosPrintMode.BOTH:
+                            for diff_id in self.diff_list.copy():
+                                diff_viewer.show(diff_id)
+                    except Exception as e:
+                        logging.exception(e)
+                    finally:
+                        if self.print_mode == CodeArgosPrintMode.ID or self.print_mode == CodeArgosPrintMode.BOTH:
+                            print( "diffs: {0}".format(self.diff_list))
                 return
             except Exception as e:
                 logging.exception(e)
                 continue
-            finally:
-                if len(self.diff_list) > 0:
-                    diff_viewer = DisplayDiff(self.db_name)
-                        
-                    for diff_id in self.diff_list:
-                        diff_viewer.show(diff_id)
+                

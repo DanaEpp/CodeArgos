@@ -6,15 +6,11 @@ import getopt
 import re
 from codeargos.__version__ import __version__
 import codeargos.Constants as Constants
+from codeargos.enums import CodeArgosMode, CodeArgosPrintMode
 from codeargos.webcrawler import WebCrawler
 from codeargos.displaydiff import DisplayDiff
 from datetime import tzinfo, timedelta, datetime, timezone
 import logging
-from enum import IntEnum
-
-class CodeArgosMode(IntEnum):
-    RECON = 0
-    REVIEW = 1
 
 class CodeArgos:
 
@@ -44,9 +40,10 @@ class CodeArgos:
         # Default to recon mode
         mode = CodeArgosMode.RECON
         diff_id = 0
+        print_mode = CodeArgosPrintMode.BOTH
 
         try:
-            opts, args = getopt.getopt(argv, "hu:t:dsf:w:", ["help", "url=", "threads=", "debug", "stats", "file", "webhook=", "wurl=", "webhookurl=", "diff="])
+            opts, args = getopt.getopt(argv, "hu:t:dsf:w:p:", ["help", "url=", "threads=", "debug", "stats", "file", "webhook=", "wurl=", "webhookurl=", "diff=", "--print"])
         except getopt.GetoptError as err:
             logging.exception(err)
             logging.debug("opts: {0} | args: {1}".format(opts, args))
@@ -86,7 +83,17 @@ class CodeArgos:
                 try:
                     diff_id = int(arg)
                 except Exception as e:
-                    logging.exception(e)                    
+                    logging.exception(e)   
+            elif opt in ("-p", "--print"):
+                pmode = arg.lower()
+                if pmode == "none":
+                    print_mode = CodeArgosPrintMode.NONE
+                elif pmode == "id":
+                    print_mode = CodeArgosPrintMode.ID
+                elif pmode == "diff":
+                    print_mode = CodeArgosPrintMode.DIFF
+                else:
+                    print_mode = CodeArgosPrintMode.BOTH
 
         if log_level is None:
             logging.basicConfig( 
@@ -113,7 +120,7 @@ class CodeArgos:
                 print( "Attempting to scan {0} across {1} threads...".format(CodeArgos.target_host, threads))
                 print( "Starting scan at {0} UTC".format(scan_start.strftime("%Y-%m-%d %H:%M")) )
                 
-                crawler = WebCrawler(CodeArgos.target_host, threads, show_stats, db_file_path, webhook_type, webhook_url)
+                crawler = WebCrawler(CodeArgos.target_host, threads, show_stats, db_file_path, webhook_type, webhook_url, print_mode)
                 crawler.start()
 
                 scan_end = datetime.now(timezone.utc)

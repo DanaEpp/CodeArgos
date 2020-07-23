@@ -27,7 +27,6 @@ class DisplayDiff:
             diff = self.data_store.get_diff(diff_id)
 
             if diff:
-
                 print("\n[DIFF #{0}] {1} (Detected: {2}) ".format(diff.id, diff.url, diff.date) )
                 lines = diff.content.split('\n')
                 for line in lines:
