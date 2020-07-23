@@ -55,7 +55,7 @@ Here is another example in Microsoft Teams. Note the "View Code" button launches
 
 > ![Teams notification](CodeArgos-Teams-Notification.png)
 
-Finally, here is an example of message being send to Discord.
+Finally, here is an example of message being sent to Discord.
 
 > ![Discord notification](CodeArgos-Discord-Notification.png)
 
@@ -63,7 +63,6 @@ For more information on setting up webhook notifications for your favorite apps 
 * **Slack** : [Detailed instructions](https://api.slack.com/messaging/webhooks). To setup your first one [go here](https://my.slack.com/services/new/incoming-webhook/).
 * **Microsoft Teams** : [Detailed instructions](https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook)
 * **Discord** : [Detailed instructions](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks)
-* **Generic webhook** : TBA
 
 ## Tips
 If you are having any difficulties in crawling your target web app, consider dialing back the threads used. By default it will select five times the number of CPUs you have. I've found the most success with `-t 10` on targets behind difficult WAFs. While there is an incrimental backoff retry pattern in the tool, the reality is CodeArgos can be agressive on its initial scan as it populates it's database. 
