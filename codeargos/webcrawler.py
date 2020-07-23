@@ -9,6 +9,7 @@ import time
 from codeargos.scraper import Scraper
 from codeargos.datastore import DataStore
 from codeargos.scrapedpage import ScrapedPage
+from codeargos.displaydiff import DisplayDiff
 from codeargos.webhook import WebHookType, WebHook
 from urllib.parse import urlparse
 
@@ -21,6 +22,7 @@ class WebCrawler:
         self.queued_urls.put(self.seed_url)
         self.show_stats = stats
         self.scripts_found = 0
+        self.diff_list = set([])
 
         # Setup local sqlite database
         self.db_name = "unknown.db"
@@ -118,6 +120,7 @@ class WebCrawler:
             self.data_store.add_page(page)
             if diff_content:
                 diff_id = self.data_store.add_diff(url,diff_content)
+                self.diff_list.add(diff_id)
                 self.notify_webhook(url, diff_id)                
 
         # also add scraped links to queue if they
@@ -172,8 +175,14 @@ class WebCrawler:
 
                 i=i+1
             except Empty:
-                logging.debug("All queues and jobs complete.")
+                logging.debug("All queues and jobs complete.")                
                 return
             except Exception as e:
                 logging.exception(e)
                 continue
+            finally:
+                if len(self.diff_list) > 0:
+                    diff_viewer = DisplayDiff(self.db_name)
+                        
+                    for diff_id in self.diff_list:
+                        diff_viewer.show(diff_id)

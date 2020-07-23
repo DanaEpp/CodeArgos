@@ -28,7 +28,7 @@ class DisplayDiff:
 
             if diff:
 
-                print("[DIFF #{0}] {1} (Detected: {2}) ".format(diff.id, diff.url, diff.date) )
+                print("\n[DIFF #{0}] {1} (Detected: {2}) ".format(diff.id, diff.url, diff.date) )
                 lines = diff.content.split('\n')
                 for line in lines:
                     if line.startswith('+'):
@@ -44,4 +44,3 @@ class DisplayDiff:
         except Exception as e:
             logging.exception(e)
         
-        print("\n")

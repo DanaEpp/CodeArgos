@@ -115,9 +115,25 @@ class Scraper:
         try:
             response = self.get_page(session, self.url)
             if response and response.ok: 
-                raw_content = response.text
+                raw_content = ""
                 parsed_html = BeautifulSoup(response.content, features='html.parser')
-                new_page_sig = hashlib.sha256(response.text.encode('utf-8')).hexdigest()
+
+                # We only want to hash the code blocks in the page, not the entire page, unless of course 
+                # it's a Javascript file. Otherwise any HTML code change affects an change diff, when we really
+                # only want to be alerted of Javascript changes
+                if self.url.lower().endswith(".js"):
+                    raw_content = response.text
+                else:
+                    # Fetch all the script blocks that are NOT references to external scripts
+                    for script in parsed_html.find_all("script"):
+                        if 'src' not in script.attrs:
+                            # OK, its a local code block. Add it to what we have so we can hash all the blocks
+                            # as one entity.
+                            raw_content += script.string
+                if raw_content:                                    
+                    new_page_sig = hashlib.sha256(raw_content.encode('utf-8')).hexdigest()                            
+                else:
+                    new_page_sig = "NOSCRIPTS"
             else:
                 status_code = response.status_code if response else "unknown"
                 logging.debug( "Received error status {0} when fetching {1}".format(status_code, self.url))
@@ -132,7 +148,6 @@ class Scraper:
                 new_content = False
             else:
                 msg = "Changes detected on {0}".format(self.url)
-                print(msg)
                 logging.debug(msg)
                 differ = CodeDiffer(True, CodeDifferMode.UNIFIED)
                 diff_content = differ.diff( self.url, self.old_scraped_page.content, raw_content )

@@ -33,19 +33,10 @@ class CodeDiffer:
         if self.mode == CodeDifferMode.UNIFIED:
             delta = difflib.unified_diff(
                 beautiful_old_code, beautiful_new_code,
-                fromfile="before", tofile="after",
+                fromfile="before : {0}".format(url), tofile="after : {0}".format(url),
                 lineterm="")
 
-            # Create copies of the iterator so we can manipulate the colored one
-            # seperately without storing it to the database with the ansi chars
-            raw_delta, color_delta = tee(delta)
-
-            diff_data = '\n'.join(raw_delta)
-            
-            if self.console:
-                print( "[CHANGED FILE] {0}".format(url))
-                color_diff = self.__color_diff(color_delta)            
-                print('\n'.join(color_diff))
+            diff_data = '\n'.join(delta)
             
             return diff_data
         else:
@@ -58,14 +49,3 @@ class CodeDiffer:
                 print(diff_data)
 
             return diff_data
-        
-    def __color_diff(self, diff):
-        for line in diff:
-            if line.startswith('+'):
-                yield Fore.GREEN + line + Fore.RESET
-            elif line.startswith('-'):
-                yield Fore.RED + line + Fore.RESET
-            elif line.startswith('^'):
-                yield Fore.BLUE + line + Fore.RESET
-            else:
-                yield line        

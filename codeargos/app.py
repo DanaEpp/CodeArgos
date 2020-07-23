@@ -112,7 +112,7 @@ class CodeArgos:
                 scan_start = datetime.now(timezone.utc)
                 print( "Attempting to scan {0} across {1} threads...".format(CodeArgos.target_host, threads))
                 print( "Starting scan at {0} UTC".format(scan_start.strftime("%Y-%m-%d %H:%M")) )
-
+                
                 crawler = WebCrawler(CodeArgos.target_host, threads, show_stats, db_file_path, webhook_type, webhook_url)
                 crawler.start()
 
