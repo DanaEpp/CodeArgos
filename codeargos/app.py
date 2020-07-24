@@ -47,11 +47,9 @@ class CodeArgos:
                 level=log_level,
                 format='%(asctime)s [%(levelname)s] %(message)s',
                 datefmt='%m/%d/%Y %I:%M:%S %p' )
-                
+
     @classmethod
     def get_print_mode(cls,pmode):
-        print_mode = CodeArgosPrintMode.BOTH
-
         if pmode == "none":
             print_mode = CodeArgosPrintMode.NONE
         elif pmode == "id":
