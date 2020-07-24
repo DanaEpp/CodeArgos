@@ -1,4 +1,13 @@
 # CodeArgos
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=codeargos-github&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=codeargos-github)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=codeargos-github&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=codeargos-github)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=codeargos-github&metric=security_rating)](https://sonarcloud.io/dashboard?id=codeargos-github)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=codeargos-github&metric=alert_status)](https://sonarcloud.io/dashboard?id=codeargos-github)
+
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=codeargos-github&metric=bugs)](https://sonarcloud.io/dashboard?id=codeargos-github)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=codeargos-github&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=codeargos-github)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=codeargos-github&metric=code_smells)](https://sonarcloud.io/dashboard?id=codeargos-github)
+
 This tool supports the continious recon of scripts and script blocks in an active web application. 
 
 It populates and maintains an internal database by web crawling a target and detects Javascript files and HTML script blocks, watching for changes as they are published. 
