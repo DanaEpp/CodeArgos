@@ -33,12 +33,40 @@ class CodeArgos:
         print( 'REVIEW: codeargos.py --diff 123 -f /path/to/your.db' )       
         print('\n')
 
+    @classmethod
+    def setup_logging(cls, log_level):
+        if log_level is None:
+            logging.basicConfig( 
+                stream=sys.stdout, 
+                level=log_level,
+                format='%(asctime)s [%(levelname)s] %(message)s',
+                datefmt='%m/%d/%Y %I:%M:%S %p' )
+        else:
+            logging.basicConfig( 
+                filename="codeargos.log", 
+                level=log_level,
+                format='%(asctime)s [%(levelname)s] %(message)s',
+                datefmt='%m/%d/%Y %I:%M:%S %p' )
+                
+    @classmethod
+    def get_print_mode(cls,pmode):
+        print_mode = CodeArgosPrintMode.BOTH
+
+        if pmode == "none":
+            print_mode = CodeArgosPrintMode.NONE
+        elif pmode == "id":
+            print_mode = CodeArgosPrintMode.ID
+        elif pmode == "diff":
+            print_mode = CodeArgosPrintMode.DIFF
+        else:
+            print_mode = CodeArgosPrintMode.BOTH
+
+        return print_mode
+
     @staticmethod
     def run(argv):
         CodeArgos.print_banner()
 
-        # Default to recon mode
-        mode = CodeArgosMode.RECON
         diff_id = 0
         print_mode = CodeArgosPrintMode.BOTH
 
@@ -85,33 +113,11 @@ class CodeArgos:
                 except Exception as e:
                     logging.exception(e)   
             elif opt in ("-p", "--print"):
-                pmode = arg.lower()
-                if pmode == "none":
-                    print_mode = CodeArgosPrintMode.NONE
-                elif pmode == "id":
-                    print_mode = CodeArgosPrintMode.ID
-                elif pmode == "diff":
-                    print_mode = CodeArgosPrintMode.DIFF
-                else:
-                    print_mode = CodeArgosPrintMode.BOTH
+                print_mode = CodeArgos.get_print_mode(arg.lower())
 
-        if log_level is None:
-            logging.basicConfig( 
-                stream=sys.stdout, 
-                level=log_level,
-                format='%(asctime)s [%(levelname)s] %(message)s',
-                datefmt='%m/%d/%Y %I:%M:%S %p' )
-        else:
-            logging.basicConfig( 
-                filename="codeargos.log", 
-                level=log_level,
-                format='%(asctime)s [%(levelname)s] %(message)s',
-                datefmt='%m/%d/%Y %I:%M:%S %p' )
+        CodeArgos.setup_logging(log_level)
 
         if diff_id > 0 and db_file_path:
-            mode = CodeArgosMode.REVIEW
-
-        if mode == CodeArgosMode.REVIEW:
             diff_viewer = DisplayDiff(db_file_path)
             diff_viewer.show(diff_id)            
         else:
