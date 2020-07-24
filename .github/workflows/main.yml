@@ -35,6 +35,5 @@ jobs:
     # Run SonarCloud scan on codebase
     - name: SonarCloud Scan
       uses: SonarSource/sonarcloud-github-action@v1.3
-      with:
-        # Set the sonar.projectBaseDir analysis property
-        projectBaseDir: . # optional, default is .   
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}  
