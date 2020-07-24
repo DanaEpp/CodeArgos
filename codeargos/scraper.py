@@ -112,6 +112,16 @@ class Scraper:
 
         return new_content, diff_content
 
+    def get_script_blocks(self,html):
+        scripts_blocks = ""
+        for script in html.find_all("script"):
+            if 'src' not in script.attrs:
+                # OK, its a local code block. Add it to what we have so we can hash all the blocks
+                # as one entity.
+                scripts_blocks += script.string
+
+        return scripts_blocks
+
     def scrape(self):
         parsed_html = ""
         new_page_sig = ""
@@ -138,15 +148,7 @@ class Scraper:
                 # We only want to hash the code blocks in the page, not the entire page, unless of course 
                 # it's a Javascript file. Otherwise any HTML code change affects an change diff, when we really
                 # only want to be alerted of Javascript changes
-                if self.url.lower().endswith(".js"):
-                    raw_content = response.text
-                else:
-                    # Fetch all the script blocks that are NOT references to external scripts
-                    for script in parsed_html.find_all("script"):
-                        if 'src' not in script.attrs:
-                            # OK, its a local code block. Add it to what we have so we can hash all the blocks
-                            # as one entity.
-                            raw_content += script.string
+                raw_content = response.text if self.url.lower().endswith(".js") else self.get_script_blocks(parsed_html)
 
                 new_page_sig = hashlib.sha256(raw_content.encode('utf-8')).hexdigest() if raw_content else "NOSCRIPTS"
             else:
