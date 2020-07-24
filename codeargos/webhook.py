@@ -7,6 +7,8 @@ import json
 import pymsteams
 
 class WebHook:
+    DEFAULT_HEADERS = {'Content-Type': 'application/json'}
+
     def __init__(self, url, hooktype=WebHookType.GENERIC):
         self.url = url
         self.hooktype = hooktype
@@ -33,7 +35,7 @@ class WebHook:
         }
 
         try:
-            response = requests.post( self.url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
+            response = requests.post( self.url, data=json.dumps(data), headers=WebHook.DEFAULT_HEADERS)
             if not response.ok:
                 logging.debug( "Failed to send notification via Generic webhook. Server response: {0}".format(response.text))
         except Exception as e:
@@ -51,7 +53,7 @@ class WebHook:
         }
 
         try:
-            response = requests.post( self.url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
+            response = requests.post( self.url, data=json.dumps(data), headers=WebHook.DEFAULT_HEADERS)
             if not response.ok:
                 logging.debug( "Failed to send notification via Slack. Server response: {0}".format(response.text))
         except Exception as e:            
@@ -79,7 +81,7 @@ class WebHook:
         }
 
         try:
-            response = requests.post( self.url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
+            response = requests.post( self.url, data=json.dumps(data), headers=WebHook.DEFAULT_HEADERS)
             if not response.ok:
                 logging.debug( "Failed to send notification via Discord. Server response: {0}".format(response.text))
 
