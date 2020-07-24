@@ -66,8 +66,8 @@ class CodeArgos:
             elif opt in ( "-t", "--threads"):
                 try:
                     threads = int(arg, base=10)
-                except:
-                    print( "Invalid thread count. Using defaults")
+                except ValueError:
+                    print( "Invalid thread count. Using defaults")                    
                     threads = os.cpu_count() * 5
             elif opt in ( "-d", "--debug" ):
                 log_level = logging.DEBUG

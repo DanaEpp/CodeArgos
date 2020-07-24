@@ -174,12 +174,11 @@ class WebCrawler:
                     job.add_done_callback(self.process_scraper_results)
                     jobs.append(job)
 
-                if self.show_stats:
-                    if i % LOG_EVERY_N == 0:
-                        print("Processed: {0:<8} | Queue: {1:<8} | Scheduled Jobs: {2:<8}".format(
-                            len(self.processed_urls), 
-                            self.queued_urls.qsize(),
-                            self.pool._work_queue.qsize()))  
+                if self.show_stats and i % LOG_EVERY_N == 0:
+                    print("Processed: {0:<8} | Queue: {1:<8} | Scheduled Jobs: {2:<8}".format(
+                        len(self.processed_urls), 
+                        self.queued_urls.qsize(),
+                        self.pool._work_queue.qsize()))  
 
                 i=i+1
             except Empty:
@@ -189,21 +188,22 @@ class WebCrawler:
                 # the diffs. If we don't wait, we may miss a few children still being processed and
                 # could cause a runtime exception due to the diff_list size changing.
                 concurrent.futures.wait(jobs, timeout=None, return_when=ALL_COMPLETED)
-
-                if len(self.diff_list) > 0:
-                    diff_viewer = DisplayDiff(self.db_name)
-                    
-                    try:
-                        if self.print_mode == CodeArgosPrintMode.DIFF or self.print_mode == CodeArgosPrintMode.BOTH:
-                            for diff_id in self.diff_list.copy():
-                                diff_viewer.show(diff_id)
-                    except Exception as e:
-                        logging.exception(e)
-                    finally:
-                        if self.print_mode == CodeArgosPrintMode.ID or self.print_mode == CodeArgosPrintMode.BOTH:
-                            print( "diffs: {0}".format(self.diff_list))
+                self.display_results()                
                 return
             except Exception as e:
                 logging.exception(e)
                 continue
-                
+        
+    def display_results(self):
+        if len(self.diff_list) > 0:
+            diff_viewer = DisplayDiff(self.db_name)
+            
+            try:
+                if self.print_mode == CodeArgosPrintMode.DIFF or self.print_mode == CodeArgosPrintMode.BOTH:
+                    for diff_id in self.diff_list.copy():
+                        diff_viewer.show(diff_id)
+            except Exception as e:
+                logging.exception(e)
+            finally:
+                if self.print_mode == CodeArgosPrintMode.ID or self.print_mode == CodeArgosPrintMode.BOTH:
+                    print( "diffs: {0}".format(self.diff_list))                
