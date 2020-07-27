@@ -164,8 +164,6 @@ class Scraper:
         if self.scoped_scan == False:
             scraped_urls = self.get_links(self.url, parsed_html)
             self.internal_urls = set(scraped_urls)
-        else:
-            logging.debug( "Scoped scan. Not getting links." )
 
         session.close()
 

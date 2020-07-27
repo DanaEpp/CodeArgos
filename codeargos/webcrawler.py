@@ -129,16 +129,14 @@ class WebCrawler:
                 self.diff_list.add(diff_id)
                 self.notify_webhook(url, diff_id)                
 
-        # If we are doing a scoped scan we don't add the spidered links found
-        if self.scoped_scan == False:
-            # also add scraped links to queue if they
-            # aren't already queued or already processed
-            for link_url in internal_urls:
-                # We have to account for not just internal pages, but external scripts foreign to 
-                # the target app. ie: jQuery, Angular etc
-                if link_url.startswith(self.seed_url) or link_url.lower().endswith(".js"):
-                    if link_url not in self.queued_urls.queue and link_url not in self.processed_urls:
-                        self.queued_urls.put(link_url)
+        # also add scraped links to queue if they
+        # aren't already queued or already processed
+        for link_url in internal_urls:
+            # We have to account for not just internal pages, but external scripts foreign to 
+            # the target app. ie: jQuery, Angular etc
+            if link_url.startswith(self.seed_url) or link_url.lower().endswith(".js"):
+                if link_url not in self.queued_urls.queue and link_url not in self.processed_urls:
+                    self.queued_urls.put(link_url)
     
     @property
     def processed(self):
@@ -162,7 +160,7 @@ class WebCrawler:
         try:
             result = urlparse(x)
             return all([result.scheme in ["http", "https", "ftp"], result.netloc])
-        except:
+        except Exception:
             return False
 
     def start(self, targets):
