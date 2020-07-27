@@ -119,6 +119,11 @@ If you aren't sure whats going on, use the `-d` argument and look through the `c
 
 If you find the tool is tripping up on a target, please open an [issue](https://github.com/DanaEpp/CodeArgos/issues) and include your target URL and any log data you are comfortable in sharing. I'll try to take a look at it ASAP.
 
+Don't want to crawl the whole site and only look at one or two Javascript files? No problem. Try something like:
+```bash
+python -m codeargos -u http://yourtarget.com --scope /path/to/scoped-targets.txt
+```
+
 ## Dev Tips
 You can evaluate the scanner and parser by jumping into the test_site dir and running the launcher. It will load a test web server on port 9000 for you.
 
