@@ -34,10 +34,11 @@ class Scraper:
         'text/x-javascript'
         )
 
-    def __init__(self, url, scraped_page):
+    def __init__(self, url, scraped_page, scoped_scan):
         self.url = url
         self.old_scraped_page = scraped_page 
         self.internal_urls = None
+        self.scoped_scan = scoped_scan
 
     def get_page(self, session, url):
         response = None
@@ -159,10 +160,13 @@ class Scraper:
 
         new_content, diff_content = self.check_changes(new_page_sig, raw_content)
         
-        scraped_urls = self.get_links(self.url, parsed_html)
+        scraped_urls = []
+        if self.scoped_scan == False:
+            scraped_urls = self.get_links(self.url, parsed_html)
+            self.internal_urls = set(scraped_urls)
+        else:
+            logging.debug( "Scoped scan. Not getting links." )
 
         session.close()
 
-        self.internal_urls = set(scraped_urls)
-        
         return self.internal_urls, self.url, new_page_sig, new_content, raw_content, diff_content

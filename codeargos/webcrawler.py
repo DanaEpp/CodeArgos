@@ -28,6 +28,7 @@ class WebCrawler:
         self.scripts_found = 0
         self.diff_list = set([])
         self.print_mode = print_mode
+        self.scoped_scan = False
 
         # Setup local sqlite database
         self.db_name = "unknown.db"
@@ -128,14 +129,16 @@ class WebCrawler:
                 self.diff_list.add(diff_id)
                 self.notify_webhook(url, diff_id)                
 
-        # also add scraped links to queue if they
-        # aren't already queued or already processed
-        for link_url in internal_urls:
-            # We have to account for not just internal pages, but external scripts foreign to 
-            # the target app. ie: jQuery, Angular etc
-            if link_url.startswith(self.seed_url) or link_url.lower().endswith(".js"):
-                if link_url not in self.queued_urls.queue and link_url not in self.processed_urls:
-                    self.queued_urls.put(link_url)
+        # If we are doing a scoped scan we don't add the spidered links found
+        if self.scoped_scan == False:
+            # also add scraped links to queue if they
+            # aren't already queued or already processed
+            for link_url in internal_urls:
+                # We have to account for not just internal pages, but external scripts foreign to 
+                # the target app. ie: jQuery, Angular etc
+                if link_url.startswith(self.seed_url) or link_url.lower().endswith(".js"):
+                    if link_url not in self.queued_urls.queue and link_url not in self.processed_urls:
+                        self.queued_urls.put(link_url)
     
     @property
     def processed(self):
@@ -149,10 +152,30 @@ class WebCrawler:
             message = "Changes detected on {0}. Review in {1} [#diff: {2}]".format(url, self.db_name, diff_id)
             self.webhook.notify(message, url)
 
-    def start(self):
+    def add_targets(self, targets):        
+        for target in targets:
+            if self.valid_url(target):
+                logging.debug( "Adding {0} to queue...".format(target) )
+                self.queued_urls.put(target)
+        
+    def valid_url(self, x):
+        try:
+            result = urlparse(x)
+            return all([result.scheme in ["http", "https", "ftp"], result.netloc])
+        except:
+            return False
+
+    def start(self, targets):
         LOG_EVERY_N = 500
         i = 0
 
+        if targets:
+            # If --scope is used, we need to remove the seed_url and ONLY scan those
+            # targets defined
+            self.queued_urls.queue.clear()
+            self.scoped_scan = True
+            self.add_targets(targets)
+        
         jobs = []
         
         while True:
@@ -170,7 +193,7 @@ class WebCrawler:
                     # Check the datastore to see if we have a sig for this page
                     scraped_page = self.data_store.get_page(target_url) 
 
-                    job = self.pool.submit(Scraper(target_url, scraped_page).scrape)
+                    job = self.pool.submit(Scraper(target_url, scraped_page, self.scoped_scan).scrape)
                     job.add_done_callback(self.process_scraper_results)
                     jobs.append(job)
 

@@ -14,10 +14,7 @@ import logging
 
 class CodeArgos:
 
-    target_host=''
-
-    def __init__(self, starting_url):
-        self.target_host = starting_url
+    def __init__(self):
         self.visited = set()
 
     @classmethod
@@ -61,15 +58,34 @@ class CodeArgos:
 
         return print_mode
 
+    @classmethod
+    def get_scoped_targets(cls,file_path):
+        scope = []
+        try:
+            scope_file = open( file_path, 'r')
+            targets = scope_file.readlines()
+            scope_file.close()
+            for target in targets:
+                scope.append(target.strip())
+        except FileNotFoundError:
+            print( "A valid scope target list file not be found.")
+        except Exception as e:
+            logging.exception(e)
+        return scope
+
     @staticmethod
     def run(argv):
         CodeArgos.print_banner()
 
         diff_id = 0
         print_mode = CodeArgosPrintMode.BOTH
+        targets = []
+        seed_url = ""
 
         try:
-            opts, args = getopt.getopt(argv, "hu:t:dsf:w:p:", ["help", "url=", "threads=", "debug", "stats", "file", "webhook=", "wurl=", "webhookurl=", "diff=", "--print"])
+            opts, args = getopt.getopt( argv, 
+                "hu:t:ds:f:w:p:", 
+                ["help", "url=", "threads=", "debug", "stats", "file", "webhook=", "wurl=", "webhookurl=", "diff=", "print=", "scope="])
         except getopt.GetoptError as err:
             logging.exception(err)
             logging.debug("opts: {0} | args: {1}".format(opts, args))
@@ -88,7 +104,7 @@ class CodeArgos:
                 CodeArgos.display_usage()
                 sys.exit()
             elif opt in ( "-u", "--url"):
-                CodeArgos.target_host = arg
+                seed_url = arg
             elif opt in ( "-t", "--threads"):
                 try:
                     threads = int(arg, base=10)
@@ -97,7 +113,7 @@ class CodeArgos:
                     threads = os.cpu_count() * 5
             elif opt in ( "-d", "--debug" ):
                 log_level = logging.DEBUG
-            elif opt in ( "-s", "--stats" ):
+            elif opt in ( "--stats" ):
                 show_stats = True
             elif opt in ( "-f", "--file" ):
                 db_file_path = arg
@@ -112,20 +128,22 @@ class CodeArgos:
                     logging.exception(e)   
             elif opt in ("-p", "--print"):
                 print_mode = CodeArgos.get_print_mode(arg.lower())
-
+            elif opt in ("-s", "--scope"):
+                targets = CodeArgos.get_scoped_targets(arg)
+                
         CodeArgos.setup_logging(log_level)
 
         if diff_id > 0 and db_file_path:
             diff_viewer = DisplayDiff(db_file_path)
             diff_viewer.show(diff_id)            
         else:
-            if CodeArgos.target_host:
+            if seed_url:
                 scan_start = datetime.now(timezone.utc)
-                print( "Attempting to scan {0} across {1} threads...".format(CodeArgos.target_host, threads))
+                print( "Attempting to scan {0} across {1} threads...".format(seed_url, threads))
                 print( "Starting scan at {0} UTC".format(scan_start.strftime("%Y-%m-%d %H:%M")) )
                 
-                crawler = WebCrawler(CodeArgos.target_host, threads, show_stats, db_file_path, webhook_type, webhook_url, print_mode)
-                crawler.start()
+                crawler = WebCrawler(seed_url, threads, show_stats, db_file_path, webhook_type, webhook_url, print_mode)
+                crawler.start(targets)
 
                 scan_end = datetime.now(timezone.utc)
                 elapsed_time = scan_end - scan_start
