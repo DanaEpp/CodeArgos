@@ -43,7 +43,9 @@ python3 -m codeargos -u target.com
         [-t thread_cnt] [-d] [-s] [-f /path/to/your/file.db] 
         [-w generic|slack|teams|discord --wurl https://hook.slack.com/some/webhook]
         [-p id|diff|both|none]
+        [--scope /path/to/scope/file]
 ```
+
 When used to REVIEW a diff after detection during RECON:
 ```bash 
 python3 -m codeargos -f /path/to/your/file.db --diff id_num
@@ -52,7 +54,7 @@ python3 -m codeargos -f /path/to/your/file.db --diff id_num
 * `-u`, `--url` : The target base URL (with crawl anything it finds underneith it)
 * `-t`, `--threads` [optional] : The number of threads to run. By default it is calculated at 5 times your total CPU count
 * `-d`, `--debug` [optional] : Write out debug information to local log file (codeargos.log)
-* `-s`, `--stats` [optional] : Dump stats to stdout to show progress of crawl
+* `--stats` [optional] : Dump stats to stdout to show progress of crawl
 * `-f`, `--file` [optional] : Reads and stores data across runs using a sqlite database you point to. If not used, default is `target.com.db`, where **target** is the hostname of the URL passed in.
 * `-w`, `--webhook` [optional] : Enables notifications to a webhook. Possible options are *slack*, *teams*, *discord* and *generic*. Requires the `--wurl` param. Use generic when sending to Zapier, IFTTT, Microsoft Logic Apps or Microsoft Flow
 * `--wurl` or `--webhookurl` [optional] : The fully qualified path to your webhook endpoint. You need to generate this in your favorite web app (Slack/Teams/Discord etc).
@@ -62,6 +64,7 @@ python3 -m codeargos -f /path/to/your/file.db --diff id_num
   *  **diff** : Shows the actual diffs between scans
   *  **both** : Shows both the diffs and then the list of ids (default)
   *  **none** : Useful in first time run or when you expect to use notifications to send results
+*  `-s` or `--scope` [optional] : Defines the file that will be used for a fixed scope scan. In this mode the crawler will **NOT** add links it discovers to the queue for deeper scanning. It will ONLY scan the files defined. It will also remove whatever target you added in the `-u` param from the queue. You still need to pass `-u` though, as its the seed used to define the database filename unless you pass in `-f`.
 
 ## Webhooks support
 To assist in notifying your red team of recent code changes, or to get ahead of other bug bounty hunters who may be competing on the same target, consider using webhook notifications. Here is a real life example that got me a $1,000 bounty because I was able to 'get there first'.
