@@ -70,13 +70,13 @@ class Scraper:
 
                 parsed_link = urlparse(link_url)
 
+                full_url = link_url
+                
                 # Need to account for malformed URLs, ie: http:/singleslashisbad.com
                 if parsed_link.scheme and not parsed_link.netloc:
                     continue
                 elif not parsed_link.scheme and not parsed_link.netloc and parsed_link.path:
-                    full_url = urljoin(url, link_url)
-                else:
-                    full_url = link_url
+                    full_url = urljoin(url, link_url)   
 
                 links.append( full_url )
 
