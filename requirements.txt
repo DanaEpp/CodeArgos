@@ -1,6 +1,6 @@
 urllib3==1.26.5
 colorama==0.4.3
 jsbeautifier==1.11.0
-requests==2.23.0
+requests==2.31.0
 pymsteams==0.1.13
 beautifulsoup4==4.9.1
