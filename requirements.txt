@@ -1,4 +1,4 @@
-urllib3==1.26.5
+urllib3==1.26.18
 colorama==0.4.3
 jsbeautifier==1.11.0
 requests==2.31.0
